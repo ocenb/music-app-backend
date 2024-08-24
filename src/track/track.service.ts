@@ -1,0 +1,266 @@
+import {
+	BadRequestException,
+	ForbiddenException,
+	forwardRef,
+	Inject,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common';
+import { PrismaService } from 'src/prisma.service';
+import {
+	UpdateTrackDto,
+	UploadedFilesDto,
+	UploadTrackDto,
+	UploadTracksDto
+} from './track.dto';
+import { FileService } from 'src/file/file.service';
+import { PlaylistTrackService } from 'src/playlist/playlist-track/playlist-track.service';
+import { AlbumTrackService } from 'src/album/album-track/album-track.service';
+
+@Injectable()
+export class TrackService {
+	constructor(
+		private readonly prismaService: PrismaService,
+		private readonly fileService: FileService,
+		@Inject(forwardRef(() => PlaylistTrackService))
+		private readonly playlistTrackService: PlaylistTrackService,
+		private readonly albumTrackService: AlbumTrackService
+	) {}
+
+	async getMany(userId?: number, take?: number) {
+		return await this.prismaService.track.findMany({
+			where: { userId },
+			include: { user: { select: { username: true } } },
+			orderBy: { createdAt: 'desc' },
+			take
+		});
+	}
+
+	async getMostPopular(userId?: number, take?: number) {
+		return await this.prismaService.track.findMany({
+			where: { userId },
+			include: { user: { select: { username: true } } },
+			orderBy: { plays: 'desc' },
+			take
+		});
+	}
+
+	async getById(id: number) {
+		return await this.prismaService.track.findUnique({ where: { id } });
+	}
+
+	async getByTitle(userId: number, title: string) {
+		return await this.prismaService.track.findUnique({
+			where: { userId_title: { title, userId } }
+		});
+	}
+
+	async upload(
+		userId: number,
+		uploadTrackDto: UploadTrackDto,
+		files: UploadedFilesDto
+	) {
+		await this.validateTrackTitle(userId, uploadTrackDto.title);
+		await this.validateChangeableId(userId, uploadTrackDto.changeableId);
+		const audioFile = await this.fileService.saveAudio(files.audio[0]);
+		let duration: number;
+		let imageName: string;
+		try {
+			duration = await this.fileService.getTrackDuration(audioFile.path);
+			const imageFile = await this.fileService.saveImage(files.image[0]);
+			imageName = imageFile.filename;
+		} catch (err) {
+			this.fileService.deleteFileByPath(audioFile.path);
+			throw err;
+		}
+		return await this.prismaService.track.create({
+			data: {
+				userId,
+				duration,
+				audio: audioFile.filename,
+				image: imageName,
+				...uploadTrackDto
+			}
+		});
+	}
+
+	async uploadForAlbum(
+		userId: number,
+		uploadTracksDto: UploadTracksDto,
+		audios: Express.Multer.File[]
+	) {
+		const data: {
+			userId: number;
+			duration: number;
+			audio: string;
+			title: string;
+			changeableId: string;
+		}[] = [];
+		const { tracks } = uploadTracksDto;
+		for (let i = 0; i < tracks.length; i++) {
+			const trackInfo = tracks[i];
+			try {
+				await this.validateTrackTitle(userId, trackInfo.title);
+				await this.validateChangeableId(userId, trackInfo.changeableId);
+				const audioFile = await this.fileService.saveAudio(audios[i]);
+				const duration = await this.fileService.getTrackDuration(
+					audioFile.path
+				);
+				console.log(audioFile.filename);
+				data.push({
+					userId,
+					duration,
+					audio: audioFile.filename,
+					...trackInfo
+				});
+			} catch (err) {
+				for (const track of data) {
+					this.fileService.deleteFileByName(track.audio, 'audio');
+				}
+				throw err;
+			}
+		}
+		return await this.prismaService.track.createMany({
+			data
+		});
+	}
+
+	async addPlay(trackId: number) {
+		await this.validateTrack(trackId);
+		await this.prismaService.track.update({
+			data: { plays: { increment: 1 } },
+			where: { id: trackId }
+		});
+	}
+
+	async changeImage(trackId: number, image: string) {
+		return await this.prismaService.track.update({
+			data: { image },
+			where: { id: trackId }
+		});
+	}
+
+	async changeImages(tracksIds: number[], image: string) {
+		return await this.prismaService.track.updateMany({
+			data: { image },
+			where: { id: { in: tracksIds } }
+		});
+	}
+
+	async update(
+		userId: number,
+		trackId: number,
+		updateTrackDto: UpdateTrackDto,
+		image: Express.Multer.File
+	) {
+		const track = await this.validateTrack(trackId);
+		await this.checkPermission(
+			userId,
+			track.userId,
+			'You do not have permission to update this track'
+		);
+		if (updateTrackDto.title) {
+			await this.validateTrackTitle(userId, updateTrackDto.title);
+		}
+		let imageName: string;
+		if (image) {
+			const imageFile = await this.fileService.saveImage(image);
+			await this.deleteImageIfFirstAlbum(trackId, track.image);
+			imageName = imageFile.filename;
+		}
+		return await this.prismaService.track.update({
+			data: { image: imageName, ...updateTrackDto },
+			where: { id: trackId }
+		});
+	}
+
+	async delete(userId: number, trackId: number) {
+		const track = await this.prismaService.track.findUnique({
+			where: { id: trackId },
+			include: {
+				playlists: { select: { playlistId: true, position: true } },
+				albums: { select: { albumId: true, position: true } }
+			}
+		});
+		if (!track) {
+			throw new NotFoundException('Track not found');
+		}
+		await this.checkPermission(
+			userId,
+			track.userId,
+			'You do not have permission to delete this track'
+		);
+		await this.fileService.deleteFileByName(track.audio, 'audio');
+		await this.deleteImageIfFirstAlbum(trackId, track.image);
+		await this.prismaService.track.delete({
+			where: { id: trackId }
+		});
+		await this.playlistTrackService.moveTracksPositions(track.playlists);
+		await this.albumTrackService.moveTracksPositions(track.albums);
+	}
+
+	async deleteMany(tracksIds: number[]) {
+		const tracks = await this.prismaService.track.findMany({
+			where: { id: { in: tracksIds } },
+			include: {
+				playlists: { select: { playlistId: true, position: true } },
+				albums: { select: { albumId: true, position: true } }
+			}
+		});
+		for (const track of tracks) {
+			await this.fileService.deleteFileByName(track.audio, 'audio');
+		}
+		await this.prismaService.track.deleteMany({
+			where: { id: { in: tracksIds } }
+		});
+		for (const track of tracks) {
+			await this.playlistTrackService.moveTracksPositions(track.playlists);
+			await this.albumTrackService.moveTracksPositions(track.albums);
+		}
+	}
+
+	async deleteAllUserTracks(userId: number) {
+		await this.prismaService.track.deleteMany({ where: { userId } });
+	}
+
+	async validateTrack(trackId: number) {
+		const track = await this.getById(trackId);
+		if (!track) {
+			throw new NotFoundException('Track not found');
+		}
+		return track;
+	}
+
+	async checkPermission(userId: number, trackId: number, message: string) {
+		if (userId !== trackId) {
+			throw new ForbiddenException(message);
+		}
+	}
+
+	private async validateTrackTitle(userId: number, title: string) {
+		const track = await this.getByTitle(userId, title);
+		if (track) {
+			throw new BadRequestException(
+				`A track with the title "${title}" already exists.`
+			);
+		}
+	}
+
+	private async validateChangeableId(userId: number, changeableId: string) {
+		const track = await this.prismaService.track.findUnique({
+			where: { userId_changeableId: { userId, changeableId } }
+		});
+		if (track) {
+			throw new BadRequestException(
+				`You already have a track with the id "${changeableId}".`
+			);
+		}
+	}
+
+	private async deleteImageIfFirstAlbum(trackId: number, trackImage: string) {
+		const firstAlbum = await this.albumTrackService.getFirstAlbum(trackId);
+		if (firstAlbum.image !== trackImage) {
+			await this.fileService.deleteFileByName(trackImage, 'images');
+		}
+	}
+}

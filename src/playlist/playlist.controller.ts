@@ -1,0 +1,114 @@
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	Param,
+	ParseIntPipe,
+	Patch,
+	Post,
+	Query,
+	UploadedFile,
+	UseInterceptors
+} from '@nestjs/common';
+import { PlaylistService } from './playlist.service';
+import {
+	CreatePlaylistDto,
+	CreatePlaylistDtoWithImage,
+	UpdatePlaylistDto,
+	UpdatePlaylistDtoWithImage
+} from './playlist.dto';
+import { User } from 'src/auth/decorators/user.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+	ImageOptionalValidationPipe,
+	ImageValidationPipe
+} from 'src/pipes/files-validation.pipe';
+import {
+	ApiBody,
+	ApiConsumes,
+	ApiOperation,
+	ApiResponse,
+	ApiTags
+} from '@nestjs/swagger';
+import {
+	Playlist,
+	PlaylistFull,
+	PlaylistWithUsername
+} from './playlist.entities';
+import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+
+@ApiTags('Playlist')
+@Auth()
+@Controller('playlist')
+export class PlaylistController {
+	constructor(private readonly playlistService: PlaylistService) {}
+
+	@Get(':playlistId')
+	@ApiOperation({ summary: 'Gets full playlist' })
+	@ApiResponse({ status: 200, type: PlaylistFull })
+	async getOneFull(@Param('playlistId', ParseIntPipe) playlistId: number) {
+		return await this.playlistService.getOneFull(playlistId);
+	}
+
+	@Get()
+	@ApiOperation({ summary: 'Gets multiple playlists' })
+	@ApiResponse({ status: 200, type: [PlaylistWithUsername] })
+	async getMany(
+		@Query('userId', ParseIntOptionalPipe) userId?: number,
+		@Query('take', ParseIntOptionalPipe) take?: number
+	) {
+		return await this.playlistService.getMany(userId, take);
+	}
+
+	@Post()
+	@UseInterceptors(FileInterceptor('image'))
+	@ApiOperation({ summary: 'Creates a playlist' })
+	@ApiConsumes('multipart/form-data')
+	@ApiBody({
+		type: CreatePlaylistDtoWithImage
+	})
+	@ApiResponse({ status: 201, type: Playlist })
+	async create(
+		@User('id') userId: number,
+		@Body() createPlaylistDto: CreatePlaylistDto,
+		@UploadedFile(ImageValidationPipe) image: Express.Multer.File
+	) {
+		return await this.playlistService.create(userId, createPlaylistDto, image);
+	}
+
+	@Patch(':playlistId')
+	@UseInterceptors(FileInterceptor('image'))
+	@ApiOperation({ summary: 'Changes playlist' })
+	@ApiConsumes('multipart/form-data')
+	@ApiBody({
+		type: UpdatePlaylistDtoWithImage
+	})
+	@ApiResponse({ status: 200, type: Playlist })
+	async update(
+		@User('id') userId: number,
+		@Param('playlistId', ParseIntPipe) playlistId: number,
+		@Body() updatePlaylistInfoDto: UpdatePlaylistDto,
+		@UploadedFile(ImageOptionalValidationPipe) image?: Express.Multer.File
+	) {
+		return await this.playlistService.update(
+			userId,
+			playlistId,
+			updatePlaylistInfoDto,
+			image
+		);
+	}
+
+	@Delete(':playlistId')
+	@HttpCode(204)
+	@ApiOperation({ summary: 'Deletes playlist' })
+	@ApiResponse({ status: 204 })
+	async delete(
+		@User('id') userId: number,
+		@Param('playlistId', ParseIntPipe) playlistId: number
+	) {
+		await this.playlistService.delete(userId, playlistId);
+	}
+}

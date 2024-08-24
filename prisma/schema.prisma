@@ -1,0 +1,177 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id               Int                 @id @default(autoincrement())
+    username         String              @unique
+    email            String              @unique
+    password         String
+    image            String              @default("default.jpg")
+    tokens           Token[]
+    tracks           Track[]
+    playlists        Playlist[]
+    albums           Album[]
+    followers        UserFollower[]      @relation(name: "user_followers")
+    following        UserFollower[]      @relation(name: "user_following")
+    likedTracks      UserLikedTrack[]
+    likedAlbums      UserLikedAlbum[]
+    savedPlaylists   UserSavedPlaylist[]
+    listeningHistory ListeningHistory[]
+    createdAt        DateTime            @default(now()) @map("created_at")
+    updatedAt        DateTime            @updatedAt @map("updated_at")
+
+    @@map("user")
+}
+
+model Token {
+    id           String   @id
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId       Int      @map("user_id")
+    refreshToken String   @unique @map("refresh_token")
+    expiresAt    DateTime @map("expires_at")
+    createdAt    DateTime @default(now()) @map("created_at")
+
+    @@map("token")
+}
+
+model Track {
+    id               Int                @id @default(autoincrement())
+    changeableId     String
+    title            String
+    duration         Int
+    plays            Int                @default(0)
+    audio            String
+    image            String             @default("default.jpg")
+    user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId           Int                @map("user_id")
+    playlists        PlaylistTrack[]
+    albums           AlbumTrack[]
+    likes            UserLikedTrack[]
+    listeningHistory ListeningHistory[]
+    createdAt        DateTime           @default(now()) @map("created_at")
+    updatedAt        DateTime           @updatedAt @map("updated_at")
+
+    @@unique([userId, changeableId])
+    @@unique([userId, title])
+    @@map("track")
+}
+
+model Album {
+    id           Int              @id @default(autoincrement())
+    changeableId String
+    title        String
+    image        String
+    type         String
+    user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId       Int              @map("user_id")
+    tracks       AlbumTrack[]
+    likes        UserLikedAlbum[]
+    createdAt    DateTime         @default(now()) @map("created_at")
+    updatedAt    DateTime         @updatedAt @map("updated_at")
+
+    @@unique([userId, changeableId])
+    @@unique([userId, title])
+    @@map("album")
+}
+
+model Playlist {
+    id           Int                 @id @default(autoincrement())
+    changeableId String
+    title        String
+    image        String
+    user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId       Int                 @map("user_id")
+    tracks       PlaylistTrack[]
+    savedByUsers UserSavedPlaylist[]
+    createdAt    DateTime            @default(now()) @map("created_at")
+    updatedAt    DateTime            @updatedAt @map("updated_at")
+
+    @@unique([userId, changeableId])
+    @@unique([userId, title])
+    @@map("playlist")
+}
+
+model UserFollower {
+    following   User     @relation("user_followers", fields: [followingId], references: [id], onDelete: Cascade)
+    followingId Int      @map("user_id")
+    follower    User     @relation("user_following", fields: [followerId], references: [id], onDelete: Cascade)
+    followerId  Int      @map("follower_id")
+    followedAt  DateTime @default(now()) @map("followed_at")
+
+    @@id([followingId, followerId])
+    @@map("user_follower")
+}
+
+model UserLikedTrack {
+    user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId  Int      @map("user_id")
+    track   Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+    trackId Int      @map("track_id")
+    addedAt DateTime @default(now()) @map("added_at")
+
+    @@id([userId, trackId])
+    @@map("user_liked_track")
+}
+
+model UserLikedAlbum {
+    user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId  Int      @map("user_id")
+    album   Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+    albumId Int      @map("album_id")
+    addedAt DateTime @default(now()) @map("added_at")
+
+    @@id([userId, albumId])
+    @@map("user_liked_album")
+}
+
+model UserSavedPlaylist {
+    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId     Int      @map("user_id")
+    playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+    playlistId Int      @map("playlist_id")
+    addedAt    DateTime @default(now()) @map("added_at")
+
+    @@id([userId, playlistId])
+    @@map("user_saved_playlist")
+}
+
+model AlbumTrack {
+    album    Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+    albumId  Int      @map("playlist_id")
+    track    Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+    trackId  Int      @map("track_id")
+    position Int
+    addedAt  DateTime @default(now()) @map("added_at")
+
+    @@id([albumId, trackId])
+    @@map("album_track")
+}
+
+model PlaylistTrack {
+    playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+    playlistId Int      @map("playlist_id")
+    track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+    trackId    Int      @map("track_id")
+    position   Int
+    addedAt    DateTime @default(now()) @map("added_at")
+
+    @@id([playlistId, trackId])
+    @@map("playlist_track")
+}
+
+model ListeningHistory {
+    id       String   @id @default(uuid())
+    user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId   Int      @map("user_id")
+    track    Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+    trackId  Int      @map("track_id")
+    playedAt DateTime @default(now()) @map("played_at")
+
+    @@map("listening_history")
+}
