@@ -42,10 +42,16 @@ export class UserService {
 		});
 	}
 
-	async getByEmail(email: string, withPassword: boolean = false) {
+	async getFullById(id: number) {
+		return await this.prismaService.user.findUnique({
+			where: { id }
+		});
+	}
+
+	async getByEmail(email: string) {
 		return await this.prismaService.user.findUnique({
 			where: { email },
-			select: { ...this.selectPrivate, password: withPassword }
+			select: { ...this.selectPrivate, password: true }
 		});
 	}
 
@@ -60,9 +66,18 @@ export class UserService {
 		return user;
 	}
 
+	async getByNameWithoutError(username: string) {
+		const user = await this.prismaService.user.findUnique({
+			where: { username },
+			select: this.selectPublic
+		});
+		return user;
+	}
+
 	async getMany(take?: number) {
 		return await this.prismaService.user.findMany({
 			select: this.selectPublic,
+			orderBy: { createdAt: 'desc' },
 			take
 		});
 	}
@@ -102,6 +117,10 @@ export class UserService {
 	}
 
 	async changeEmail(userId: number, email: string) {
+		const userByEmail = await this.getByEmail(email);
+		if (userByEmail) {
+			throw new BadRequestException('User with the same email already exists');
+		}
 		return await this.prismaService.user.update({
 			where: { id: userId },
 			data: { email },

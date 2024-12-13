@@ -32,7 +32,9 @@ export class AuthService {
 		if (userByEmail) {
 			throw new BadRequestException('User with the same email already exists');
 		}
-		const userByName = await this.userService.getByName(registerDto.username);
+		const userByName = await this.userService.getByNameWithoutError(
+			registerDto.username
+		);
 		if (userByName) {
 			throw new BadRequestException('User with the same name already exists');
 		}
@@ -46,7 +48,7 @@ export class AuthService {
 	}
 
 	async login(loginDto: LoginDto) {
-		const userByEmail = await this.userService.getByEmail(loginDto.email, true);
+		const userByEmail = await this.userService.getByEmail(loginDto.email);
 		if (!userByEmail) {
 			throw new NotFoundException('User with this email does not exist');
 		}

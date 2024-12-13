@@ -5,16 +5,16 @@ import {
 	StreamableFile
 } from '@nestjs/common';
 import { extname, join } from 'path';
-import { createReadStream, promises as fs } from 'fs';
+import { createReadStream, statSync, promises as fs } from 'fs';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { v4 as uuidv4 } from 'uuid';
 
 type FileCategory = 'audio' | 'images';
-ffmpeg.setFfprobePath('C:\\Program files\\ffmpeg\\bin\\ffprobe.exe');
+ffmpeg.setFfprobePath('C:\\Program files\\ffmpeg\\bin\\ffprobe.exe'); //
 
 @Injectable()
 export class FileService {
-	async getAudio(fileName: string) {
+	streamAudio(fileName: string) {
 		const filePath = join(
 			__dirname,
 			'..',
@@ -22,12 +22,30 @@ export class FileService {
 			'..',
 			'static',
 			'audio',
-			`${fileName}.webm`
+			fileName
 		);
-		await this.checkIsFileExists(filePath);
 		const file = createReadStream(filePath);
-		return new StreamableFile(file);
+		const size = statSync(filePath).size;
+		return { streamableFile: new StreamableFile(file), size };
 	}
+
+	// async getAudioDuration(audio: Express.Multer.File) {
+	// 	const fileFormat = extname(audio.originalname).toLowerCase();
+	// 	const fileName = uuidv4() + fileFormat;
+	// 	const filePath = join(
+	// 		__dirname,
+	// 		'..',
+	// 		'..',
+	// 		'..',
+	// 		'static',
+	// 		'audio',
+	// 		fileName
+	// 	);
+	// 	await this.writeFile(filePath, audio.buffer);
+	// 	const duration = await this.getTrackDuration(filePath);
+	// 	await this.deleteFileByPath(filePath);
+	// 	return duration;
+	// }
 
 	async saveAudio(file: Express.Multer.File): Promise<Express.Multer.File> {
 		const fileFormat = extname(file.originalname).toLowerCase();

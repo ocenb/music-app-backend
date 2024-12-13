@@ -54,7 +54,7 @@ export class PlaylistTrackService {
 			where: { playlistId }
 		});
 		const lastPosition = lastPositionTrack ? lastPositionTrack.position : 0;
-		if (!position || position > lastPositionTrack.position) {
+		if (!position || position > lastPosition) {
 			return await this.prismaService.playlistTrack.create({
 				data: {
 					...addTrackDto,
