@@ -27,6 +27,19 @@ export class TrackService {
 		private readonly albumTrackService: AlbumTrackService
 	) {}
 
+	async streamAudio(trackId: number) {
+		const track = await this.validateTrack(trackId);
+		const { streamableFile, size } = this.fileService.streamAudio(track.audio);
+		return { streamableFile, fileName: track.audio, size };
+	}
+
+	async getOne(trackId: number) {
+		return await this.prismaService.track.findUnique({
+			where: { id: trackId },
+			include: { user: { select: { username: true } } }
+		});
+	}
+
 	async getMany(userId?: number, take?: number) {
 		return await this.prismaService.track.findMany({
 			where: { userId },
@@ -106,7 +119,6 @@ export class TrackService {
 				const duration = await this.fileService.getTrackDuration(
 					audioFile.path
 				);
-				console.log(audioFile.filename);
 				data.push({
 					userId,
 					duration,
@@ -259,7 +271,7 @@ export class TrackService {
 
 	private async deleteImageIfFirstAlbum(trackId: number, trackImage: string) {
 		const firstAlbum = await this.albumTrackService.getFirstAlbum(trackId);
-		if (firstAlbum.image !== trackImage) {
+		if (!firstAlbum || firstAlbum.image !== trackImage) {
 			await this.fileService.deleteFileByName(trackImage, 'images');
 		}
 	}

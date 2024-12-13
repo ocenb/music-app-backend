@@ -9,6 +9,8 @@ import {
 	Patch,
 	Post,
 	Query,
+	Res,
+	StreamableFile,
 	UploadedFile,
 	UploadedFiles,
 	UseInterceptors
@@ -44,12 +46,43 @@ import {
 import { Track, TracksCreatedCount, TrackWithUsername } from './track.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { Response } from 'express';
 
 @ApiTags('Track')
 @Auth()
 @Controller('track')
 export class TrackController {
 	constructor(private readonly trackService: TrackService) {}
+
+	@Get('stream/:trackId')
+	@ApiOperation({ summary: 'Streams an audio file' })
+	@ApiResponse({ status: 200, type: StreamableFile })
+	async streamAudio(
+		@Res({ passthrough: true }) res: Response,
+		@Param('trackId') trackId: number
+	) {
+		const { streamableFile, fileName, size } =
+			await this.trackService.streamAudio(trackId);
+		res.set({
+			'Access-Control-Allow-Origin': '*', // ??
+			'Accept-Ranges': 'bytes',
+			'Content-Type': 'audio/webm',
+			'Content-Length': size,
+			'Content-Range': `0-${size}`,
+			'Content-Disposition': `inline; filename=${fileName}`
+		});
+		return streamableFile;
+	}
+
+	@Get(':trackId')
+	@ApiOperation({ summary: 'Gets one track' })
+	@ApiResponse({
+		status: 200,
+		type: TrackWithUsername
+	})
+	async getOne(@Param('trackId') trackId: number) {
+		return await this.trackService.getOne(trackId);
+	}
 
 	@Get()
 	@ApiOperation({ summary: 'Gets many tracks' })

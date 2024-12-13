@@ -106,7 +106,7 @@ export class AlbumTrackService {
 			where: { albumId }
 		});
 		const lastPosition = lastPositionTrack ? lastPositionTrack.position : 0;
-		if (!position || position > lastPositionTrack.position) {
+		if (!position || position > lastPosition) {
 			return await this.prismaService.albumTrack.create({
 				data: { ...addTrackDto, trackId, albumId, position: lastPosition + 1 }
 			});
