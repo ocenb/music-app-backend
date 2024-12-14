@@ -33,6 +33,24 @@ export class PlaylistTrackService {
 		return tracks;
 	}
 
+	async getManyIds(playlistId: number, startPosition: number) {
+		const { tracks } = await this.prismaService.playlist.findUnique({
+			where: { id: playlistId },
+			select: {
+				tracks: {
+					orderBy: { position: 'asc' },
+					select: { track: { select: { id: true } } },
+					where: { position: { gte: startPosition } }
+				}
+			}
+		});
+		const ids: number[] = [];
+		tracks.map((obj) => {
+			ids.push(obj.track.id);
+		});
+		return ids;
+	}
+
 	async add(
 		userId: number,
 		playlistId: number,

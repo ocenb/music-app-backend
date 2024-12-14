@@ -74,7 +74,7 @@ export class TrackController {
 		return streamableFile;
 	}
 
-	@Get(':trackId')
+	@Get('one/:trackId')
 	@ApiOperation({ summary: 'Gets one track' })
 	@ApiResponse({
 		status: 200,
@@ -95,6 +95,20 @@ export class TrackController {
 		@Query('take', ParseIntOptionalPipe) take?: number
 	) {
 		return await this.trackService.getMany(userId, take);
+	}
+
+	@Get('ids')
+	@ApiOperation({ summary: "Gets many tracks' ids" })
+	@ApiResponse({
+		status: 200,
+		type: [Number]
+	})
+	async getManyIds(
+		@Query('userId', ParseIntPipe) userId: number,
+		// @Query('take', ParseIntPipe) take?: number
+		@Query('startId', ParseIntPipe) startId: number
+	) {
+		return await this.trackService.getManyIds(userId, startId);
 	}
 
 	@Get('most-popular')
