@@ -34,6 +34,16 @@ export class AlbumTrackController {
 		return await this.albumTrackService.getMany(albumId, take);
 	}
 
+	@Get('ids')
+	@ApiOperation({ summary: 'Gets multiple tracks in album' })
+	@ApiResponse({ status: 200, type: [Number] })
+	async getManyIds(
+		@Param('albumId', ParseIntPipe) albumId: number,
+		@Query('startPosition', ParseIntPipe) startPosition: number
+	) {
+		return await this.albumTrackService.getManyIds(albumId, startPosition);
+	}
+
 	@Post(':trackId')
 	@ApiOperation({ summary: 'Adds a track to the album' })
 	@ApiResponse({ status: 200, type: AlbumTrackRelation })

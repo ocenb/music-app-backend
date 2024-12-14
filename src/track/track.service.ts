@@ -49,6 +49,20 @@ export class TrackService {
 		});
 	}
 
+	async getManyIds(userId?: number, startId?: number) {
+		const objectsWithIds = await this.prismaService.track.findMany({
+			where: { userId },
+			select: { id: true },
+			orderBy: { createdAt: 'desc' },
+			cursor: { id: startId }
+		});
+		const ids: number[] = [];
+		objectsWithIds.map((obj) => {
+			ids.push(obj.id);
+		});
+		return ids;
+	}
+
 	async getMostPopular(userId?: number, take?: number) {
 		return await this.prismaService.track.findMany({
 			where: { userId },

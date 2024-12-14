@@ -37,6 +37,19 @@ export class PlaylistTrackController {
 		return await this.playlistTrackService.getMany(playlistId, take);
 	}
 
+	@Get('ids')
+	@ApiOperation({ summary: "Gets multiple tracks' ids in playlist" })
+	@ApiResponse({ status: 200, type: [Number] })
+	async getManyIds(
+		@Param('playlistId', ParseIntPipe) playlistId: number,
+		@Query('startPosition', ParseIntPipe) startPosition: number
+	) {
+		return await this.playlistTrackService.getManyIds(
+			playlistId,
+			startPosition
+		);
+	}
+
 	@Post(':trackId')
 	@ApiOperation({ summary: 'Adds track to a playlist' })
 	@ApiResponse({ status: 200, type: PlaylistTrackRelation })

@@ -34,6 +34,24 @@ export class AlbumTrackService {
 		return tracks;
 	}
 
+	async getManyIds(albumId: number, startPosition: number) {
+		const { tracks } = await this.prismaService.album.findUnique({
+			where: { id: albumId },
+			select: {
+				tracks: {
+					orderBy: { position: 'asc' },
+					select: { track: true, position: true, addedAt: true },
+					where: { position: { gte: startPosition } }
+				}
+			}
+		});
+		const ids: number[] = [];
+		tracks.map((obj) => {
+			ids.push(obj.track.id);
+		});
+		return ids;
+	}
+
 	async getAllRelations(albumId: number) {
 		return await this.prismaService.albumTrack.findMany({
 			where: { albumId }
