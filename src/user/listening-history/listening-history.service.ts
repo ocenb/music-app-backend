@@ -22,12 +22,13 @@ export class ListeningHistoryService {
 
 	async add(userId: number, trackId: number) {
 		await this.trackService.validateTrack(trackId);
-		const lastTrack = await this.prismaService.listeningHistory.findFirst({
-			where: { userId },
-			orderBy: { playedAt: 'desc' }
+		const track = await this.prismaService.listeningHistory.findUnique({
+			where: { userId_trackId: { trackId, userId } }
 		});
-		if (lastTrack && lastTrack.trackId === trackId) {
-			throw new BadRequestException('Track is already the last one in history');
+		if (track) {
+			await this.prismaService.listeningHistory.delete({
+				where: { userId_trackId: { trackId, userId } }
+			});
 		}
 		return await this.prismaService.listeningHistory.create({
 			data: { userId, trackId }

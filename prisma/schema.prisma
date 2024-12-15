@@ -166,12 +166,12 @@ model PlaylistTrack {
 }
 
 model ListeningHistory {
-    id       String   @id @default(uuid())
     user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId   Int      @map("user_id")
     track    Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
     trackId  Int      @map("track_id")
     playedAt DateTime @default(now()) @map("played_at")
 
+    @@id([userId, trackId])
     @@map("listening_history")
 }
