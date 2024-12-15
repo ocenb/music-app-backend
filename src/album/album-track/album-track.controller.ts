@@ -39,9 +39,14 @@ export class AlbumTrackController {
 	@ApiResponse({ status: 200, type: [Number] })
 	async getManyIds(
 		@Param('albumId', ParseIntPipe) albumId: number,
-		@Query('startPosition', ParseIntPipe) startPosition: number
+		@Query('startPosition', ParseIntOptionalPipe) startPosition?: number,
+		@Query('lastPosition', ParseIntOptionalPipe) lastPosition?: number
 	) {
-		return await this.albumTrackService.getManyIds(albumId, startPosition);
+		return await this.albumTrackService.getManyIds(
+			albumId,
+			startPosition,
+			lastPosition
+		);
 	}
 
 	@Post(':trackId')

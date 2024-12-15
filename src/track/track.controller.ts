@@ -105,10 +105,10 @@ export class TrackController {
 	})
 	async getManyIds(
 		@Query('userId', ParseIntPipe) userId: number,
-		// @Query('take', ParseIntPipe) take?: number
-		@Query('startId', ParseIntPipe) startId: number
+		@Query('startId', ParseIntOptionalPipe) startId?: number,
+		@Query('lastId', ParseIntOptionalPipe) lastId?: number
 	) {
-		return await this.trackService.getManyIds(userId, startId);
+		return await this.trackService.getManyIds(userId, startId, lastId);
 	}
 
 	@Get('most-popular')

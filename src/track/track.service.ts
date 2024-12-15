@@ -49,12 +49,14 @@ export class TrackService {
 		});
 	}
 
-	async getManyIds(userId?: number, startId?: number) {
+	async getManyIds(userId: number, startId?: number, lastId?: number) {
+		if (startId && lastId && startId < lastId) {
+			throw new BadRequestException(`startId is less than lastId.`);
+		}
 		const objectsWithIds = await this.prismaService.track.findMany({
-			where: { userId },
+			where: { userId, id: { gte: lastId, lte: startId } },
 			select: { id: true },
-			orderBy: { createdAt: 'desc' },
-			cursor: { id: startId }
+			orderBy: { createdAt: 'desc' }
 		});
 		const ids: number[] = [];
 		objectsWithIds.map((obj) => {

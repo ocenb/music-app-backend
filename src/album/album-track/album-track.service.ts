@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	ConflictException,
 	forwardRef,
 	Inject,
@@ -34,14 +35,23 @@ export class AlbumTrackService {
 		return tracks;
 	}
 
-	async getManyIds(albumId: number, startPosition: number) {
+	async getManyIds(
+		albumId: number,
+		startPosition?: number,
+		lastPosition?: number
+	) {
+		if (startPosition && lastPosition && startPosition > lastPosition) {
+			throw new BadRequestException(
+				`startPosition is greater than lastPosition.`
+			);
+		}
 		const { tracks } = await this.prismaService.album.findUnique({
 			where: { id: albumId },
 			select: {
 				tracks: {
 					orderBy: { position: 'asc' },
 					select: { track: true, position: true, addedAt: true },
-					where: { position: { gte: startPosition } }
+					where: { position: { gte: startPosition, lte: lastPosition } }
 				}
 			}
 		});
