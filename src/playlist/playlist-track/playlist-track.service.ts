@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	ConflictException,
 	forwardRef,
 	Inject,
@@ -33,14 +34,23 @@ export class PlaylistTrackService {
 		return tracks;
 	}
 
-	async getManyIds(playlistId: number, startPosition: number) {
+	async getManyIds(
+		playlistId: number,
+		startPosition?: number,
+		lastPosition?: number
+	) {
+		if (startPosition && lastPosition && startPosition > lastPosition) {
+			throw new BadRequestException(
+				`startPosition is greater than lastPosition.`
+			);
+		}
 		const { tracks } = await this.prismaService.playlist.findUnique({
 			where: { id: playlistId },
 			select: {
 				tracks: {
 					orderBy: { position: 'asc' },
 					select: { track: { select: { id: true } } },
-					where: { position: { gte: startPosition } }
+					where: { position: { gte: startPosition, lte: lastPosition } }
 				}
 			}
 		});

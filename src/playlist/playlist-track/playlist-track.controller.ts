@@ -42,11 +42,13 @@ export class PlaylistTrackController {
 	@ApiResponse({ status: 200, type: [Number] })
 	async getManyIds(
 		@Param('playlistId', ParseIntPipe) playlistId: number,
-		@Query('startPosition', ParseIntPipe) startPosition: number
+		@Query('startPosition', ParseIntOptionalPipe) startPosition?: number,
+		@Query('lastPosition', ParseIntOptionalPipe) lastPosition?: number
 	) {
 		return await this.playlistTrackService.getManyIds(
 			playlistId,
-			startPosition
+			startPosition,
+			lastPosition
 		);
 	}
 
