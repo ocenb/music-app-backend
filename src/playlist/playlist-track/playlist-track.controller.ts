@@ -20,6 +20,7 @@ import {
 } from './playlist-track.entities';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
+import { TracksIds } from 'src/track/track.entities';
 
 @ApiTags('Playlist tracks')
 @Auth()
@@ -39,16 +40,14 @@ export class PlaylistTrackController {
 
 	@Get('ids')
 	@ApiOperation({ summary: "Gets multiple tracks' ids in playlist" })
-	@ApiResponse({ status: 200, type: [Number] })
+	@ApiResponse({ status: 200, type: TracksIds })
 	async getManyIds(
 		@Param('playlistId', ParseIntPipe) playlistId: number,
-		@Query('startPosition', ParseIntOptionalPipe) startPosition?: number,
-		@Query('lastPosition', ParseIntOptionalPipe) lastPosition?: number
+		@Query('positionToExclude', ParseIntPipe) positionToExclude: number
 	) {
 		return await this.playlistTrackService.getManyIds(
 			playlistId,
-			startPosition,
-			lastPosition
+			positionToExclude
 		);
 	}
 

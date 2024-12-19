@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common';
 import { AlbumService } from 'src/album/album.service';
 import { PrismaService } from 'src/prisma.service';
 
@@ -22,6 +26,12 @@ export class LikedAlbumService {
 
 	async add(userId: number, albumId: number) {
 		await this.albumService.validateAlbum(albumId);
+		const likedAlbum = await this.prismaService.userLikedAlbum.findUnique({
+			where: { userId_albumId: { userId, albumId } }
+		});
+		if (likedAlbum) {
+			throw new BadRequestException('Album is already liked');
+		}
 		await this.prismaService.userLikedAlbum.create({
 			data: { userId, albumId }
 		});

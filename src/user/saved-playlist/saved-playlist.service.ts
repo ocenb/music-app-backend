@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common';
 import { PlaylistService } from 'src/playlist/playlist.service';
 import { PrismaService } from 'src/prisma.service';
 
@@ -22,6 +26,14 @@ export class SavedPlaylistService {
 
 	async save(userId: number, playlistId: number) {
 		await this.playlistService.checkPlaylistExists(playlistId);
+		const savedPlaylist = await this.prismaService.userSavedPlaylist.findUnique(
+			{
+				where: { userId_playlistId: { userId, playlistId } }
+			}
+		);
+		if (savedPlaylist) {
+			throw new BadRequestException('Playlist is already saved');
+		}
 		await this.prismaService.userSavedPlaylist.create({
 			data: { userId, playlistId }
 		});

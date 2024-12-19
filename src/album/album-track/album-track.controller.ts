@@ -39,14 +39,9 @@ export class AlbumTrackController {
 	@ApiResponse({ status: 200, type: [Number] })
 	async getManyIds(
 		@Param('albumId', ParseIntPipe) albumId: number,
-		@Query('startPosition', ParseIntOptionalPipe) startPosition?: number,
-		@Query('lastPosition', ParseIntOptionalPipe) lastPosition?: number
+		@Query('positionToExclude', ParseIntPipe) positionToExclude: number
 	) {
-		return await this.albumTrackService.getManyIds(
-			albumId,
-			startPosition,
-			lastPosition
-		);
+		return await this.albumTrackService.getManyIds(albumId, positionToExclude);
 	}
 
 	@Post(':trackId')

@@ -92,9 +92,10 @@ export class TrackController {
 	})
 	async getMany(
 		@Query('userId', ParseIntOptionalPipe) userId?: number,
-		@Query('take', ParseIntOptionalPipe) take?: number
+		@Query('take', ParseIntOptionalPipe) take?: number,
+		@Query('take', ParseIntOptionalPipe) sort?: 'popular'
 	) {
-		return await this.trackService.getMany(userId, take);
+		return await this.trackService.getMany(userId, take, sort);
 	}
 
 	@Get('ids')
@@ -105,20 +106,9 @@ export class TrackController {
 	})
 	async getManyIds(
 		@Query('userId', ParseIntPipe) userId: number,
-		@Query('startId', ParseIntOptionalPipe) startId?: number,
-		@Query('lastId', ParseIntOptionalPipe) lastId?: number
+		@Query('trackIdToExclude', ParseIntPipe) trackIdToExclude: number
 	) {
-		return await this.trackService.getManyIds(userId, startId, lastId);
-	}
-
-	@Get('most-popular')
-	@ApiOperation({ summary: 'Gets most popular tracks' })
-	@ApiResponse({ status: 200, type: [TrackWithUsername] })
-	async getMostPopular(
-		@Query('userId', ParseIntOptionalPipe) userId?: number,
-		@Query('take', ParseIntOptionalPipe) take?: number
-	) {
-		return await this.trackService.getMostPopular(userId, take);
+		return await this.trackService.getManyIds(userId, trackIdToExclude);
 	}
 
 	@Post()

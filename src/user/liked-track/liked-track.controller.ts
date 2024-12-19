@@ -14,6 +14,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LikedTrack } from './liked-track.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { TracksIds } from 'src/track/track.entities';
 
 @ApiTags('Liked tracks')
 @Auth()
@@ -29,6 +30,16 @@ export class LikedTrackController {
 		@Query('take', ParseIntOptionalPipe) take?: number
 	) {
 		return await this.likedTrackService.getMany(userId, take);
+	}
+
+	@Get('ids')
+	@ApiOperation({ summary: "Gets multiple liked tracks' ids" })
+	@ApiResponse({ status: 200, type: TracksIds })
+	async getManyIds(
+		@User('id') userId: number,
+		@Query('trackIdToExclude', ParseIntPipe) trackIdToExclude: number
+	) {
+		return await this.likedTrackService.getManyIds(userId, trackIdToExclude);
 	}
 
 	@Post(':trackId')
