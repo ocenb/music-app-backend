@@ -40,38 +40,45 @@ export class TrackService {
 		});
 	}
 
-	async getMany(userId?: number, take?: number) {
-		return await this.prismaService.track.findMany({
-			where: { userId },
-			include: { user: { select: { username: true } } },
-			orderBy: { createdAt: 'desc' },
-			take
-		});
+	async getMany(userId?: number, take?: number, sort?: 'popular') {
+		if (sort) {
+			return await this.prismaService.track.findMany({
+				where: { userId },
+				include: { user: { select: { username: true } } },
+				orderBy: { plays: 'desc' },
+				take
+			});
+		} else {
+			return await this.prismaService.track.findMany({
+				where: { userId },
+				include: { user: { select: { username: true } } },
+				orderBy: { createdAt: 'desc' },
+				take
+			});
+		}
 	}
 
-	async getManyIds(userId: number, startId?: number, lastId?: number) {
-		if (startId && lastId && startId < lastId) {
-			throw new BadRequestException(`startId is less than lastId.`);
-		}
-		const objectsWithIds = await this.prismaService.track.findMany({
-			where: { userId, id: { gte: lastId, lte: startId } },
+	async getManyIds(userId: number, trackIdToExclude: number) {
+		this.validateTrack(trackIdToExclude);
+		const prevTracks = await this.prismaService.track.findMany({
+			where: { userId, id: { gt: trackIdToExclude } },
 			select: { id: true },
 			orderBy: { createdAt: 'desc' }
 		});
-		const ids: number[] = [];
-		objectsWithIds.map((obj) => {
-			ids.push(obj.id);
+		const nextTracks = await this.prismaService.track.findMany({
+			where: { userId, id: { lt: trackIdToExclude } },
+			select: { id: true },
+			orderBy: { createdAt: 'desc' }
 		});
-		return ids;
-	}
-
-	async getMostPopular(userId?: number, take?: number) {
-		return await this.prismaService.track.findMany({
-			where: { userId },
-			include: { user: { select: { username: true } } },
-			orderBy: { plays: 'desc' },
-			take
+		const prevIds: number[] = [];
+		prevTracks.map((obj) => {
+			prevIds.push(obj.id);
 		});
+		const nextIds: number[] = [];
+		nextTracks.map((obj) => {
+			nextIds.push(obj.id);
+		});
+		return { prevIds, nextIds };
 	}
 
 	async getById(id: number) {

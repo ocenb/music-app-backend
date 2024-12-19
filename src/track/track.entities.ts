@@ -22,3 +22,8 @@ export class TrackWithUsername extends Track {
 export class TracksCreatedCount {
 	count: number;
 }
+
+export class TracksIds {
+	prevIds: number[];
+	nextIds: number[];
+}

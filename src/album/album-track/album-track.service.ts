@@ -35,31 +35,36 @@ export class AlbumTrackService {
 		return tracks;
 	}
 
-	async getManyIds(
-		albumId: number,
-		startPosition?: number,
-		lastPosition?: number
-	) {
-		if (startPosition && lastPosition && startPosition > lastPosition) {
-			throw new BadRequestException(
-				`startPosition is greater than lastPosition.`
-			);
-		}
-		const { tracks } = await this.prismaService.album.findUnique({
+	async getManyIds(albumId: number, positionToExclude: number) {
+		const prevTracks = await this.prismaService.playlist.findUnique({
 			where: { id: albumId },
 			select: {
 				tracks: {
 					orderBy: { position: 'asc' },
-					select: { track: true, position: true, addedAt: true },
-					where: { position: { gte: startPosition, lte: lastPosition } }
+					select: { track: { select: { id: true } } },
+					where: { position: { lt: positionToExclude } }
 				}
 			}
 		});
-		const ids: number[] = [];
-		tracks.map((obj) => {
-			ids.push(obj.track.id);
+		const nextTracks = await this.prismaService.playlist.findUnique({
+			where: { id: albumId },
+			select: {
+				tracks: {
+					orderBy: { position: 'asc' },
+					select: { track: { select: { id: true } } },
+					where: { position: { gt: positionToExclude } }
+				}
+			}
 		});
-		return ids;
+		const prevIds: number[] = [];
+		prevTracks.tracks.map((obj) => {
+			prevIds.push(obj.track.id);
+		});
+		const nextIds: number[] = [];
+		nextTracks.tracks.map((obj) => {
+			nextIds.push(obj.track.id);
+		});
+		return { prevIds, nextIds };
 	}
 
 	async getAllRelations(albumId: number) {
