@@ -13,7 +13,14 @@ export class ListeningHistoryService {
 		return await this.prismaService.listeningHistory.findMany({
 			where: { userId },
 			select: {
-				track: { include: { user: { select: { username: true } } } }
+				track: {
+					include: {
+						likes: {
+							where: { userId },
+							select: { addedAt: true }
+						}
+					}
+				}
 			},
 			orderBy: { playedAt: 'desc' },
 			take

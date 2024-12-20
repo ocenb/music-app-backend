@@ -43,7 +43,7 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import { Track, TracksCreatedCount, TrackWithUsername } from './track.entities';
+import { Track, TracksCreatedCount, TrackWithLiked } from './track.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Response } from 'express';
@@ -78,24 +78,28 @@ export class TrackController {
 	@ApiOperation({ summary: 'Gets one track' })
 	@ApiResponse({
 		status: 200,
-		type: TrackWithUsername
+		type: TrackWithLiked
 	})
-	async getOne(@Param('trackId') trackId: number) {
-		return await this.trackService.getOne(trackId);
+	async getOne(
+		@User('id') currentUserId: number,
+		@Param('trackId') trackId: number
+	) {
+		return await this.trackService.getOne(trackId, currentUserId);
 	}
 
 	@Get()
 	@ApiOperation({ summary: 'Gets many tracks' })
 	@ApiResponse({
 		status: 200,
-		type: [TrackWithUsername]
+		type: [TrackWithLiked]
 	})
 	async getMany(
+		@User('id') currentUserId: number,
 		@Query('userId', ParseIntOptionalPipe) userId?: number,
 		@Query('take', ParseIntOptionalPipe) take?: number,
-		@Query('take', ParseIntOptionalPipe) sort?: 'popular'
+		@Query('sort', ParseIntOptionalPipe) sort?: 'popular'
 	) {
-		return await this.trackService.getMany(userId, take, sort);
+		return await this.trackService.getMany(currentUserId, userId, take, sort);
 	}
 
 	@Get('ids')
@@ -146,6 +150,7 @@ export class TrackController {
 	@ApiResponse({ status: 201, type: TracksCreatedCount })
 	async uploadForAlbum(
 		@User('id') userId: number,
+		@User('username') username: string,
 		@Body()
 		uploadTracksDto: UploadTracksDto,
 		@UploadedFiles(AudiosValidationPipe)
@@ -153,6 +158,7 @@ export class TrackController {
 	) {
 		return await this.trackService.uploadForAlbum(
 			userId,
+			username,
 			uploadTracksDto,
 			audios
 		);

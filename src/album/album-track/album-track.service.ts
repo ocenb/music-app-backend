@@ -1,5 +1,4 @@
 import {
-	BadRequestException,
 	ConflictException,
 	forwardRef,
 	Inject,
@@ -90,7 +89,7 @@ export class AlbumTrackService {
 			orderBy: { addedAt: 'asc' },
 			where: { trackId }
 		});
-		return await this.albumService.getOne(albums[1].albumId);
+		return await this.albumService.getOneById(albums[1].albumId);
 	}
 
 	async checkFirstAlbum(trackId: number, albumId: number) {

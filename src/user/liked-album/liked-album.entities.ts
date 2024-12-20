@@ -1,5 +1,5 @@
-import { AlbumWithUsername } from 'src/album/album.entities';
+import { Album } from 'src/album/album.entities';
 
 export class LikedAlbum {
-	album: AlbumWithUsername;
+	album: Album;
 }

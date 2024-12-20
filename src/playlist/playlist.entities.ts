@@ -6,16 +6,11 @@ export class Playlist {
 	changeableId: string;
 	image: string;
 	userId: number;
+	username: string;
 	@ApiDate()
 	createdAt: string;
 	@ApiDate()
 	updatedAt: string;
-}
-
-export class PlaylistWithUsername extends Playlist {
-	user: {
-		username: string;
-	};
 }
 
 export class PlaylistFull extends Playlist {

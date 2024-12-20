@@ -8,16 +8,11 @@ export class Album {
 	image: string;
 	type: AlbumType;
 	userId: number;
+	username: string;
 	@ApiDate()
 	createdAt: string;
 	@ApiDate()
 	updatedAt: string;
-}
-
-export class AlbumWithUsername extends Album {
-	user: {
-		username: string;
-	};
 }
 
 export class AlbumFull extends Album {

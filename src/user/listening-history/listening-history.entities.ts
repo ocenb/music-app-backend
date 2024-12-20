@@ -1,7 +1,7 @@
-import { TrackWithUsername } from 'src/track/track.entities';
+import { TrackWithLiked } from 'src/track/track.entities';
 
 export class ListeningHistoryTrack {
-	track: TrackWithUsername;
+	track: TrackWithLiked;
 }
 
 export class ListeningHistoryRelation {

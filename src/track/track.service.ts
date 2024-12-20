@@ -33,27 +33,38 @@ export class TrackService {
 		return { streamableFile, fileName: track.audio, size };
 	}
 
-	async getOne(trackId: number) {
+	async getOne(trackId: number, currentUserId: number) {
 		return await this.prismaService.track.findUnique({
 			where: { id: trackId },
-			include: { user: { select: { username: true } } }
+			include: {
+				likes: { where: { userId: currentUserId }, select: { addedAt: true } }
+			}
 		});
 	}
 
-	async getMany(userId?: number, take?: number, sort?: 'popular') {
-		if (sort) {
+	async getMany(
+		currentUserId: number,
+		userId?: number,
+		take?: number,
+		sort?: 'popular'
+	) {
+		if (sort === 'popular') {
 			return await this.prismaService.track.findMany({
 				where: { userId },
-				include: { user: { select: { username: true } } },
 				orderBy: { plays: 'desc' },
-				take
+				take,
+				include: {
+					likes: { where: { userId: currentUserId }, select: { addedAt: true } }
+				}
 			});
 		} else {
 			return await this.prismaService.track.findMany({
 				where: { userId },
-				include: { user: { select: { username: true } } },
 				orderBy: { createdAt: 'desc' },
-				take
+				take,
+				include: {
+					likes: { where: { userId: currentUserId }, select: { addedAt: true } }
+				}
 			});
 		}
 	}
@@ -111,7 +122,7 @@ export class TrackService {
 		}
 		return await this.prismaService.track.create({
 			data: {
-				userId,
+				user: { connect: { id: userId } },
 				duration,
 				audio: audioFile.filename,
 				image: imageName,
@@ -122,11 +133,13 @@ export class TrackService {
 
 	async uploadForAlbum(
 		userId: number,
+		username: string,
 		uploadTracksDto: UploadTracksDto,
 		audios: Express.Multer.File[]
 	) {
 		const data: {
 			userId: number;
+			username: string;
 			duration: number;
 			audio: string;
 			title: string;
@@ -144,6 +157,7 @@ export class TrackService {
 				);
 				data.push({
 					userId,
+					username,
 					duration,
 					audio: audioFile.filename,
 					...trackInfo
