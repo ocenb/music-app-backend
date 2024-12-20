@@ -23,20 +23,22 @@ export class AlbumService {
 		private readonly albumTrackService: AlbumTrackService
 	) {}
 
-	async getOne(albumId: number) {
-		return await this.prismaService.album.findUnique({
-			where: { id: albumId },
-			include: { user: { select: { username: true } } }
-		});
-	}
-
-	async getOneFull(albumId: number) {
+	async getOne(username: string, changeableId: string) {
 		const album = await this.prismaService.album.findUnique({
-			where: { id: albumId },
+			where: { username_changeableId: { changeableId, username } },
 			include: {
-				user: { select: { username: true } },
 				_count: { select: { likes: true, tracks: true } }
 			}
+		});
+		if (!album) {
+			throw new NotFoundException('Album not found');
+		}
+		return album;
+	}
+
+	async getOneById(albumId: number) {
+		const album = await this.prismaService.album.findUnique({
+			where: { id: albumId }
 		});
 		if (!album) {
 			throw new NotFoundException('Album not found');
@@ -47,7 +49,6 @@ export class AlbumService {
 	async getMany(userId?: number, take?: number) {
 		return await this.prismaService.album.findMany({
 			where: { userId },
-			include: { user: { select: { username: true } } },
 			take
 		});
 	}
@@ -79,7 +80,7 @@ export class AlbumService {
 		await this.trackService.changeImages(tracksIds, imageFile.filename);
 		const album = await this.prismaService.album.create({
 			data: {
-				userId,
+				user: { connect: { id: userId } },
 				title,
 				type,
 				changeableId,
@@ -87,7 +88,6 @@ export class AlbumService {
 				tracks: { createMany: { data: tracks } }
 			},
 			include: {
-				user: { select: { username: true } },
 				tracks: { orderBy: { position: 'asc' }, select: { track: true } },
 				_count: { select: { likes: true, tracks: true } }
 			}

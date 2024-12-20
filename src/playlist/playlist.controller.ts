@@ -32,11 +32,7 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import {
-	Playlist,
-	PlaylistFull,
-	PlaylistWithUsername
-} from './playlist.entities';
+import { Playlist, PlaylistFull } from './playlist.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 
@@ -47,15 +43,18 @@ export class PlaylistController {
 	constructor(private readonly playlistService: PlaylistService) {}
 
 	@Get(':playlistId')
-	@ApiOperation({ summary: 'Gets full playlist' })
+	@ApiOperation({ summary: 'Gets one playlist' })
 	@ApiResponse({ status: 200, type: PlaylistFull })
-	async getOneFull(@Param('playlistId', ParseIntPipe) playlistId: number) {
-		return await this.playlistService.getOneFull(playlistId);
+	async getOne(
+		@Query('username', ParseIntPipe) username: string,
+		@Query('changeableId', ParseIntPipe) changeableId: string
+	) {
+		return await this.playlistService.getOne(username, changeableId);
 	}
 
 	@Get()
 	@ApiOperation({ summary: 'Gets multiple playlists' })
-	@ApiResponse({ status: 200, type: [PlaylistWithUsername] })
+	@ApiResponse({ status: 200, type: [Playlist] })
 	async getMany(
 		@Query('userId', ParseIntOptionalPipe) userId?: number,
 		@Query('take', ParseIntOptionalPipe) take?: number

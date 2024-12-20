@@ -1,5 +1,5 @@
-import { PlaylistWithUsername } from 'src/playlist/playlist.entities';
+import { Playlist } from 'src/playlist/playlist.entities';
 
 export class SavedPlaylist {
-	playlist: PlaylistWithUsername;
+	playlist: Playlist;
 }

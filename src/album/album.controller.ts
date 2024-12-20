@@ -32,7 +32,7 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import { Album, AlbumFull, AlbumWithUsername } from './album.entities';
+import { Album, AlbumFull } from './album.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 
@@ -43,15 +43,18 @@ export class AlbumController {
 	constructor(private readonly albumService: AlbumService) {}
 
 	@Get(':albumId')
-	@ApiOperation({ summary: 'Gets full album' })
+	@ApiOperation({ summary: 'Gets one album' })
 	@ApiResponse({ status: 200, type: AlbumFull })
-	async getOneFull(@Param('albumId', ParseIntPipe) albumId: number) {
-		return await this.albumService.getOneFull(albumId);
+	async getOne(
+		@Query('username', ParseIntPipe) username: string,
+		@Query('changeableId', ParseIntPipe) changeableId: string
+	) {
+		return await this.albumService.getOne(username, changeableId);
 	}
 
 	@Get()
 	@ApiOperation({ summary: 'Gets multiple albums' })
-	@ApiResponse({ status: 200, type: [AlbumWithUsername] })
+	@ApiResponse({ status: 200, type: [Album] })
 	async getMany(
 		@Query('userId', ParseIntOptionalPipe) userId?: number,
 		@Query('take', ParseIntOptionalPipe) take?: number

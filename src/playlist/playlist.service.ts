@@ -15,9 +15,9 @@ export class PlaylistService {
 		private readonly fileService: FileService
 	) {}
 
-	async getOneFull(playlistId: number) {
+	async getOne(username: string, changeableId: string) {
 		const playlist = await this.prismaService.playlist.findUnique({
-			where: { id: playlistId },
+			where: { username_changeableId: { changeableId, username } },
 			include: {
 				_count: { select: { savedByUsers: true, tracks: true } }
 			}
@@ -31,7 +31,6 @@ export class PlaylistService {
 	async getMany(userId?: number, take?: number) {
 		return await this.prismaService.playlist.findMany({
 			where: { userId },
-			include: { user: { select: { username: true } } },
 			take
 		});
 	}
@@ -45,7 +44,11 @@ export class PlaylistService {
 		await this.validateChangeableId(userId, createPlaylistDto.changeableId);
 		const imageFile = await this.fileService.saveImage(image);
 		return await this.prismaService.playlist.create({
-			data: { userId, image: imageFile.filename, ...createPlaylistDto }
+			data: {
+				user: { connect: { id: userId } },
+				image: imageFile.filename,
+				...createPlaylistDto
+			}
 		});
 	}
 

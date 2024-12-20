@@ -17,7 +17,7 @@ export class LikedAlbumService {
 		return await this.prismaService.userLikedAlbum.findMany({
 			where: { userId },
 			select: {
-				album: { include: { user: { select: { username: true } } } }
+				album: true
 			},
 			orderBy: { addedAt: 'desc' },
 			take

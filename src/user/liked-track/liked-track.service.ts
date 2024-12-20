@@ -17,7 +17,14 @@ export class LikedTrackService {
 		return await this.prismaService.userLikedTrack.findMany({
 			where: { userId },
 			select: {
-				track: { include: { user: { select: { username: true } } } }
+				track: {
+					include: {
+						likes: {
+							where: { userId },
+							select: { addedAt: true }
+						}
+					}
+				}
 			},
 			orderBy: { addedAt: 'desc' },
 			take

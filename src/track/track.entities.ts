@@ -9,14 +9,19 @@ export class Track {
 	audio: string;
 	image: string;
 	userId: number;
+	username: string;
 	@ApiDate()
 	createdAt: string;
 	@ApiDate()
 	updatedAt: string;
 }
 
-export class TrackWithUsername extends Track {
-	user: { username: string };
+class AddedAt {
+	addedAt: string;
+}
+
+export class TrackWithLiked extends Track {
+	likes: AddedAt[];
 }
 
 export class TracksCreatedCount {

@@ -17,7 +17,7 @@ export class SavedPlaylistService {
 		return await this.prismaService.userSavedPlaylist.findMany({
 			where: { userId },
 			select: {
-				playlist: { include: { user: { select: { username: true } } } }
+				playlist: true
 			},
 			orderBy: { addedAt: 'desc' },
 			take
