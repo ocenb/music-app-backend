@@ -55,29 +55,31 @@ export class AlbumService {
 
 	async create(
 		userId: number,
+		username: string,
 		createAlbumDto: CreateAlbumDto,
-		image: Express.Multer.File
+		image: Express.Multer.File,
+		audios: Express.Multer.File[]
 	) {
 		const { title, changeableId, type, tracks } = createAlbumDto;
 		await this.validateAlbumTitle(userId, title);
 		await this.validateChangeableId(userId, changeableId);
-		for (const track of tracks) {
-			const trackById = await this.trackService.validateTrack(track.trackId);
-			await this.trackService.checkPermission(
-				userId,
-				trackById.userId,
-				`track ${trackById.title} is not yours`
-			);
-		}
+		const trackIds = await this.trackService.uploadMany(
+			userId,
+			username,
+			tracks,
+			audios
+		);
 		const imageFile = await this.fileService.saveImage(image);
-		const tracksIds: number[] = [];
-		for (const track of tracks) {
-			if (track.firstUpload) {
-				tracksIds.push(track.trackId);
-			}
-			delete track.firstUpload;
+		await this.trackService.changeImages(trackIds, imageFile.filename);
+
+		let createManyData: { position: number; trackId: number }[] = [];
+		for (let i = 0; i < trackIds.length; i++) {
+			createManyData.push({
+				position: tracks[i].position,
+				trackId: trackIds[i]
+			});
 		}
-		await this.trackService.changeImages(tracksIds, imageFile.filename);
+
 		const album = await this.prismaService.album.create({
 			data: {
 				user: { connect: { id: userId } },
@@ -85,13 +87,14 @@ export class AlbumService {
 				type,
 				changeableId,
 				image: imageFile.filename,
-				tracks: { createMany: { data: tracks } }
+				tracks: { createMany: { data: createManyData } }
 			},
 			include: {
 				tracks: { orderBy: { position: 'asc' }, select: { track: true } },
 				_count: { select: { likes: true, tracks: true } }
 			}
 		});
+
 		return album;
 	}
 

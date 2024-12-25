@@ -7,15 +7,11 @@ import {
 	NotFoundException
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import {
-	UpdateTrackDto,
-	UploadedFilesDto,
-	UploadTrackDto,
-	UploadTracksDto
-} from './track.dto';
+import { UpdateTrackDto, UploadedFilesDto, UploadTrackDto } from './track.dto';
 import { FileService } from 'src/file/file.service';
 import { PlaylistTrackService } from 'src/playlist/playlist-track/playlist-track.service';
 import { AlbumTrackService } from 'src/album/album-track/album-track.service';
+import { TrackToAdd } from 'src/album/album.dto';
 
 @Injectable()
 export class TrackService {
@@ -60,7 +56,7 @@ export class TrackService {
 		} else {
 			return await this.prismaService.track.findMany({
 				where: { userId },
-				orderBy: { createdAt: 'desc' },
+				orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
 				take,
 				include: {
 					likes: { where: { userId: currentUserId }, select: { addedAt: true } }
@@ -131,10 +127,10 @@ export class TrackService {
 		});
 	}
 
-	async uploadForAlbum(
+	async uploadMany(
 		userId: number,
 		username: string,
-		uploadTracksDto: UploadTracksDto,
+		uploadTracksDto: TrackToAdd[],
 		audios: Express.Multer.File[]
 	) {
 		const data: {
@@ -145,9 +141,8 @@ export class TrackService {
 			title: string;
 			changeableId: string;
 		}[] = [];
-		const { tracks } = uploadTracksDto;
-		for (let i = 0; i < tracks.length; i++) {
-			const trackInfo = tracks[i];
+		for (let i = 0; i < uploadTracksDto.length; i++) {
+			const trackInfo = uploadTracksDto[i];
 			try {
 				await this.validateTrackTitle(userId, trackInfo.title);
 				await this.validateChangeableId(userId, trackInfo.changeableId);
@@ -160,18 +155,33 @@ export class TrackService {
 					username,
 					duration,
 					audio: audioFile.filename,
-					...trackInfo
+					changeableId: trackInfo.changeableId,
+					title: trackInfo.title
 				});
 			} catch (err) {
 				for (const track of data) {
-					this.fileService.deleteFileByName(track.audio, 'audio');
+					await this.fileService.deleteFileByName(track.audio, 'audio');
 				}
 				throw err;
 			}
 		}
-		return await this.prismaService.track.createMany({
+		await this.prismaService.track.createMany({
 			data
 		});
+		let tracksChangeableIds = [];
+		uploadTracksDto.map((track) => {
+			tracksChangeableIds.push(track.changeableId);
+		});
+		const tracksIdsObjects = await this.prismaService.track.findMany({
+			where: { changeableId: { in: tracksChangeableIds } },
+			select: { id: true }
+		});
+		let tracksIds: number[] = [];
+		tracksIdsObjects.map((obj) => {
+			tracksIds.push(obj.id);
+		});
+		tracksIds.sort((a, b) => a - b); //
+		return tracksIds;
 	}
 
 	async addPlay(trackId: number) {

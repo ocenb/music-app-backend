@@ -12,7 +12,7 @@ model User {
     username         String              @unique
     email            String              @unique
     password         String
-    image            String              @default("default.jpg")
+    image            String              @default("default")
     tokens           Token[]
     tracks           Track[]
     playlists        Playlist[]
@@ -48,7 +48,7 @@ model Track {
     duration         Int
     plays            Int                @default(0)
     audio            String
-    image            String             @default("default.jpg")
+    image            String             @default("default")
     user             User               @relation(fields: [userId, username], references: [id, username], onDelete: Cascade)
     userId           Int                @map("user_id")
     username         String

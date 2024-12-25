@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { OmitType, PartialType } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
 	isArray,
@@ -12,6 +12,7 @@ import {
 	ValidatorConstraintInterface
 } from 'class-validator';
 import { ApiFile } from 'src/decorators/api.decorator';
+import { UploadTrackDto } from 'src/track/track.dto';
 
 export enum AlbumType {
 	lp = 'lp',
@@ -28,11 +29,16 @@ export class IsTracksArray implements ValidatorConstraintInterface {
 		tracks.forEach((track, index) => {
 			if (Object.keys(track).length !== 3) {
 				messages.push(
-					`tracks.${index} object should have three properties: "trackId", "position" and "firstUpload"`
+					`tracks.${index} object should have three properties: "title", "changeableId" and "position"`
 				);
 			}
-			if (track.trackId && typeof track.trackId !== 'number') {
-				messages.push(`tracks.${index} property "trackId" should be number`);
+			if (track.title && typeof track.title !== 'string') {
+				messages.push(`tracks.${index} property "title" should be string`);
+			}
+			if (track.changeableId && typeof track.changeableId !== 'string') {
+				messages.push(
+					`tracks.${index} property "changeableId" should be string`
+				);
 			}
 			if (track.position && typeof track.position !== 'number') {
 				messages.push(`tracks.${index} property "position" should be number`);
@@ -44,11 +50,6 @@ export class IsTracksArray implements ValidatorConstraintInterface {
 			) {
 				messages.push(
 					`tracks.${index} property "position" should be greater than 1`
-				);
-			}
-			if (track.firstUpload && typeof track.firstUpload !== 'boolean') {
-				messages.push(
-					`tracks.${index} property "firstUpload" should be boolean`
 				);
 			}
 		});
@@ -90,10 +91,8 @@ export class CreateAlbumDto {
 	tracks: TrackToAdd[];
 }
 
-class TrackToAdd {
-	trackId: number;
+export class TrackToAdd extends UploadTrackDto {
 	position: number;
-	firstUpload: boolean;
 }
 
 export class UpdateAlbumDto extends PartialType(
@@ -102,9 +101,11 @@ export class UpdateAlbumDto extends PartialType(
 
 // For Swagger
 
-export class CreateAlbumDtoWithImage extends CreateAlbumDto {
+export class CreateAlbumDtoWithFiles extends CreateAlbumDto {
 	@ApiFile()
 	image: string;
+	@ApiProperty({ format: 'binary', description: 'Array of files' })
+	audios: string[];
 }
 
 export class UpdateAlbumDtoWithImage extends UpdateAlbumDto {

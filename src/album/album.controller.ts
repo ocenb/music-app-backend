@@ -10,20 +10,24 @@ import {
 	Post,
 	Query,
 	UploadedFile,
+	UploadedFiles,
 	UseInterceptors
 } from '@nestjs/common';
 import { AlbumService } from './album.service';
-import { FileInterceptor } from '@nestjs/platform-express';
+import {
+	FileFieldsInterceptor,
+	FileInterceptor
+} from '@nestjs/platform-express';
 import { User } from 'src/auth/decorators/user.decorator';
 import {
 	CreateAlbumDto,
-	CreateAlbumDtoWithImage,
+	CreateAlbumDtoWithFiles,
 	UpdateAlbumDto,
 	UpdateAlbumDtoWithImage
 } from './album.dto';
 import {
-	ImageOptionalValidationPipe,
-	ImageValidationPipe
+	ImageAndAudiosValidationPipe,
+	ImageOptionalValidationPipe
 } from 'src/pipes/files-validation.pipe';
 import {
 	ApiBody,
@@ -46,8 +50,8 @@ export class AlbumController {
 	@ApiOperation({ summary: 'Gets one album' })
 	@ApiResponse({ status: 200, type: AlbumFull })
 	async getOne(
-		@Query('username', ParseIntPipe) username: string,
-		@Query('changeableId', ParseIntPipe) changeableId: string
+		@Query('username') username: string,
+		@Query('changeableId') changeableId: string
 	) {
 		return await this.albumService.getOne(username, changeableId);
 	}
@@ -63,19 +67,32 @@ export class AlbumController {
 	}
 
 	@Post()
-	@UseInterceptors(FileInterceptor('image'))
+	@UseInterceptors(
+		FileFieldsInterceptor([{ name: 'image', maxCount: 1 }, { name: 'audios' }])
+	)
 	@ApiOperation({ summary: 'Creates an album' })
 	@ApiConsumes('multipart/form-data')
 	@ApiBody({
-		type: CreateAlbumDtoWithImage
+		type: CreateAlbumDtoWithFiles
 	})
 	@ApiResponse({ status: 201, type: AlbumFull })
 	async create(
 		@User('id') userId: number,
+		@User('username') username: string,
 		@Body() createAlbumDto: CreateAlbumDto,
-		@UploadedFile(ImageValidationPipe) image: Express.Multer.File
+		@UploadedFiles(ImageAndAudiosValidationPipe)
+		files: {
+			image: [Express.Multer.File];
+			audios: Express.Multer.File[];
+		}
 	) {
-		return await this.albumService.create(userId, createAlbumDto, image);
+		return await this.albumService.create(
+			userId,
+			username,
+			createAlbumDto,
+			files.image[0],
+			files.audios
+		);
 	}
 
 	@Patch(':albumId')

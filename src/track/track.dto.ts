@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
 	isArray,
@@ -85,11 +85,6 @@ export class UploadTrackDtoWithFiles extends UploadTrackDto {
 
 	@ApiFile()
 	audio: string;
-}
-
-export class UploadTracksDtoWithAudios extends UploadTracksDto {
-	@ApiProperty({ format: 'binary', description: 'Array of files' })
-	audios: string[];
 }
 
 export class UpdateTrackDtoWithImage extends UpdateTrackDto {
