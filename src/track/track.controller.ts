@@ -21,19 +21,15 @@ import {
 	UpdateTrackDtoWithImage,
 	UploadedFilesDto,
 	UploadTrackDto,
-	UploadTrackDtoWithFiles,
-	UploadTracksDto,
-	UploadTracksDtoWithAudios
+	UploadTrackDtoWithFiles
 } from './track.dto';
 import {
 	FileFieldsInterceptor,
-	FileInterceptor,
-	FilesInterceptor
+	FileInterceptor
 } from '@nestjs/platform-express';
 import { User } from 'src/auth/decorators/user.decorator';
 import {
 	AudioImageValidationPipe,
-	AudiosValidationPipe,
 	ImageOptionalValidationPipe
 } from 'src/pipes/files-validation.pipe';
 import {
@@ -43,7 +39,7 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import { Track, TracksCreatedCount, TrackWithLiked } from './track.entities';
+import { Track, TrackWithLiked } from './track.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Response } from 'express';
@@ -97,7 +93,7 @@ export class TrackController {
 		@User('id') currentUserId: number,
 		@Query('userId', ParseIntOptionalPipe) userId?: number,
 		@Query('take', ParseIntOptionalPipe) take?: number,
-		@Query('sort', ParseIntOptionalPipe) sort?: 'popular'
+		@Query('sort') sort?: 'popular'
 	) {
 		return await this.trackService.getMany(currentUserId, userId, take, sort);
 	}
@@ -136,32 +132,6 @@ export class TrackController {
 		files: UploadedFilesDto
 	) {
 		return await this.trackService.upload(userId, uploadTrackDto, files);
-	}
-
-	@Post('for-album')
-	@UseInterceptors(FilesInterceptor('audios'))
-	@ApiOperation({
-		summary: 'Uploads tracks for album (before creating an album)'
-	})
-	@ApiConsumes('multipart/form-data')
-	@ApiBody({
-		type: UploadTracksDtoWithAudios
-	})
-	@ApiResponse({ status: 201, type: TracksCreatedCount })
-	async uploadForAlbum(
-		@User('id') userId: number,
-		@User('username') username: string,
-		@Body()
-		uploadTracksDto: UploadTracksDto,
-		@UploadedFiles(AudiosValidationPipe)
-		audios: Express.Multer.File[]
-	) {
-		return await this.trackService.uploadForAlbum(
-			userId,
-			username,
-			uploadTracksDto,
-			audios
-		);
 	}
 
 	@Post(':trackId/add-play')

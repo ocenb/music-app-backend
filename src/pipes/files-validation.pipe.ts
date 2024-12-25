@@ -24,10 +24,14 @@ export class AudioValidationPipe implements PipeTransform {
 }
 
 @Injectable()
-export class AudiosValidationPipe implements PipeTransform {
-	transform(audios: Express.Multer.File[]) {
-		audios.forEach((audio) => validateAudio(audio));
-		return audios;
+export class ImageAndAudiosValidationPipe implements PipeTransform {
+	transform(files: {
+		image: [Express.Multer.File];
+		audios: Express.Multer.File[];
+	}) {
+		validateImage(files.image[0]);
+		files.audios.forEach((audio) => validateAudio(audio));
+		return files;
 	}
 }
 

@@ -46,8 +46,8 @@ export class PlaylistController {
 	@ApiOperation({ summary: 'Gets one playlist' })
 	@ApiResponse({ status: 200, type: PlaylistFull })
 	async getOne(
-		@Query('username', ParseIntPipe) username: string,
-		@Query('changeableId', ParseIntPipe) changeableId: string
+		@Query('username') username: string,
+		@Query('changeableId') changeableId: string
 	) {
 		return await this.playlistService.getOne(username, changeableId);
 	}

@@ -106,7 +106,7 @@ export class UserService {
 		if (image) {
 			const imageFile = await this.fileService.saveImage(image);
 			imageName = imageFile.filename;
-			if (user.image !== 'default.jpg') {
+			if (user.image !== 'default') {
 				await this.fileService.deleteFileByName(user.image, 'images');
 			}
 		}

@@ -45,11 +45,17 @@ export class TokenService {
 
 	async validateRefreshToken(refreshToken: string) {
 		const payload: Payload = this.jwtService.verify(refreshToken);
-		if (!payload) {
+		if (
+			!payload ||
+			!payload.tokenId ||
+			!payload.userId ||
+			typeof payload.tokenId !== 'string' ||
+			typeof payload.userId !== 'number'
+		) {
 			throw new UnauthorizedException('Invalid refresh token');
 		}
 		const token = await this.prismaService.token.findUnique({
-			where: { refreshToken }
+			where: { refreshToken } // or ID?
 		});
 		if (!token) {
 			throw new UnauthorizedException('Invalid refresh token');

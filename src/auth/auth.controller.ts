@@ -33,7 +33,7 @@ export class AuthController {
 
 	@Post('register')
 	@ApiOperation({ summary: 'Register' })
-	@ApiResponse({ status: 200, type: UserPrivate })
+	@ApiResponse({ status: 201, type: UserPrivate })
 	async register(
 		@Body() registerDto: RegisterDto,
 		@Res({ passthrough: true }) res: Response
@@ -46,7 +46,7 @@ export class AuthController {
 
 	@Post('login')
 	@ApiOperation({ summary: 'Login' })
-	@ApiResponse({ status: 200, type: UserPrivate })
+	@ApiResponse({ status: 201, type: UserPrivate })
 	async login(
 		@Body() loginDto: LoginDto,
 		@Res({ passthrough: true }) res: Response
@@ -85,7 +85,7 @@ export class AuthController {
 
 	@Post('login/refresh')
 	@ApiOperation({ summary: 'Gets new jwt tokens' })
-	@ApiResponse({ status: 200, type: UserPrivate })
+	@ApiResponse({ status: 201, type: UserPrivate })
 	async refresh(
 		@Req() req: Request,
 		@Res({ passthrough: true }) res: Response
@@ -96,11 +96,15 @@ export class AuthController {
 			this.authService.removeTokensFromResponse(res);
 			throw new UnauthorizedException('Refresh token not passed');
 		}
-		const { accessToken, refreshToken, user } = await this.authService.refresh(
-			refreshTokenFromCookies
-		);
-		this.authService.addTokensToResponse(res, accessToken, refreshToken);
-		return user;
+		try {
+			const { accessToken, refreshToken, user } =
+				await this.authService.refresh(refreshTokenFromCookies);
+			this.authService.addTokensToResponse(res, accessToken, refreshToken);
+			return user;
+		} catch (err) {
+			this.authService.removeTokensFromResponse(res);
+			throw err;
+		}
 	}
 
 	@Patch('email')

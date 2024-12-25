@@ -8,6 +8,7 @@ import { extname, join } from 'path';
 import { createReadStream, statSync, promises as fs } from 'fs';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { v4 as uuidv4 } from 'uuid';
+import * as sharp from 'sharp';
 
 type FileCategory = 'audio' | 'images';
 ffmpeg.setFfprobePath('C:\\Program files\\ffmpeg\\bin\\ffprobe.exe'); //
@@ -90,8 +91,7 @@ export class FileService {
 	}
 
 	async saveImage(file: Express.Multer.File) {
-		const fileFormat = extname(file.originalname).toLowerCase();
-		const fileName = uuidv4() + fileFormat;
+		const fileName = uuidv4();
 		const filePath = join(
 			__dirname,
 			'..',
@@ -101,7 +101,16 @@ export class FileService {
 			'images',
 			fileName
 		);
-		await this.writeFile(filePath, file.buffer);
+		const filePath250 = `${filePath}_250x250.jpg`;
+		const filePath50 = `${filePath}_50x50.jpg`;
+
+		await sharp(file.buffer)
+			.resize(250, 250, { fit: 'cover', position: 'center' })
+			.toFile(filePath250);
+		await sharp(file.buffer)
+			.resize(50, 50, { fit: 'cover', position: 'center' })
+			.toFile(filePath50);
+
 		file.filename = fileName;
 		file.path = filePath;
 		return file;
@@ -126,7 +135,12 @@ export class FileService {
 			category,
 			fileName
 		);
-		await this.deleteFileByPath(filePath);
+		if (category === 'images') {
+			await this.deleteFileByPath(`${filePath}_250x250.jpg`);
+			await this.deleteFileByPath(`${filePath}_50x50.jpg`);
+		} else {
+			await this.deleteFileByPath(filePath);
+		}
 	}
 
 	async getTrackDuration(audioPath: string): Promise<number> {
