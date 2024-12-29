@@ -10,6 +10,7 @@ import { join } from 'path';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AuthMiddleware } from './auth/auth.middleware';
 import { AlbumModule } from './album/album.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
 	imports: [
@@ -23,7 +24,8 @@ import { AlbumModule } from './album/album.module';
 		FileModule,
 		PlaylistModule,
 		TrackModule,
-		UserModule
+		UserModule,
+		NotificationModule
 	]
 })
 export class AppModule implements NestModule {

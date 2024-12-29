@@ -126,12 +126,18 @@ export class TrackController {
 	@ApiResponse({ status: 201, type: Track })
 	async upload(
 		@User('id') userId: number,
+		@User('username') username: string,
 		@Body()
 		uploadTrackDto: UploadTrackDto,
 		@UploadedFiles(AudioImageValidationPipe)
 		files: UploadedFilesDto
 	) {
-		return await this.trackService.upload(userId, uploadTrackDto, files);
+		return await this.trackService.upload(
+			userId,
+			username,
+			uploadTrackDto,
+			files
+		);
 	}
 
 	@Post(':trackId/add-play')

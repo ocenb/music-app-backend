@@ -11,6 +11,7 @@ import { PrismaService } from 'src/prisma.service';
 import { CreateAlbumDto, UpdateAlbumDto } from './album.dto';
 import { TrackService } from 'src/track/track.service';
 import { AlbumTrackService } from './album-track/album-track.service';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class AlbumService {
@@ -20,7 +21,8 @@ export class AlbumService {
 		@Inject(forwardRef(() => TrackService))
 		private readonly trackService: TrackService,
 		@Inject(forwardRef(() => AlbumTrackService))
-		private readonly albumTrackService: AlbumTrackService
+		private readonly albumTrackService: AlbumTrackService,
+		private readonly notificationService: NotificationService
 	) {}
 
 	async getOne(username: string, changeableId: string) {
@@ -94,6 +96,13 @@ export class AlbumService {
 				_count: { select: { likes: true, tracks: true } }
 			}
 		});
+
+		this.notificationService.create(
+			userId,
+			username,
+			{ changeableId: album.changeableId, title: album.title },
+			'album'
+		);
 
 		return album;
 	}
