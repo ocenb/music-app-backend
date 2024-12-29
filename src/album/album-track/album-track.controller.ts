@@ -35,7 +35,7 @@ export class AlbumTrackController {
 	}
 
 	@Get('ids')
-	@ApiOperation({ summary: 'Gets multiple tracks in album' })
+	@ApiOperation({ summary: "Gets multiple tracks' ids in album" })
 	@ApiResponse({ status: 200, type: [Number] })
 	async getManyIds(
 		@Param('albumId', ParseIntPipe) albumId: number,

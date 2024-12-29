@@ -74,10 +74,11 @@ export class UserService {
 		return user;
 	}
 
-	async getMany(take?: number) {
+	async getMany(take = 50, lastId?: number) {
 		return await this.prismaService.user.findMany({
 			select: this.selectPublic,
 			orderBy: { createdAt: 'desc' },
+			where: { id: { lt: lastId } },
 			take
 		});
 	}

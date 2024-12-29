@@ -1,8 +1,11 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
 	BadRequestException,
+	Inject,
 	Injectable,
 	NotFoundException
 } from '@nestjs/common';
+import { Cache } from 'cache-manager';
 import { AlbumService } from 'src/album/album.service';
 import { PrismaService } from 'src/prisma.service';
 
@@ -10,7 +13,8 @@ import { PrismaService } from 'src/prisma.service';
 export class LikedAlbumService {
 	constructor(
 		private readonly prismaService: PrismaService,
-		private readonly albumService: AlbumService
+		private readonly albumService: AlbumService,
+		@Inject(CACHE_MANAGER) private cacheManager: Cache
 	) {}
 
 	async getMany(userId: number, take?: number) {
@@ -35,6 +39,32 @@ export class LikedAlbumService {
 		await this.prismaService.userLikedAlbum.create({
 			data: { userId, albumId }
 		});
+
+		const _count: string = await this.cacheManager.get(`album:${albumId}`);
+
+		if (!_count) {
+			const album = await this.prismaService.album.findUnique({
+				where: { id: albumId },
+				select: { _count: { select: { likes: true, tracks: true } } }
+			});
+
+			await this.cacheManager.set(
+				`album:${albumId}`,
+				JSON.stringify({
+					likes: album._count.likes,
+					tracks: album._count.tracks
+				})
+			);
+		} else {
+			const parsedCount = JSON.parse(_count);
+			await this.cacheManager.set(
+				`album:${albumId}`,
+				JSON.stringify({
+					likes: parsedCount.likes + 1,
+					tracks: parsedCount.tracks
+				})
+			);
+		}
 	}
 
 	async remove(userId: number, albumId: number) {
@@ -48,5 +78,31 @@ export class LikedAlbumService {
 		await this.prismaService.userLikedAlbum.delete({
 			where: { userId_albumId: { userId, albumId } }
 		});
+
+		const _count: string = await this.cacheManager.get(`album:${albumId}`);
+
+		if (!_count) {
+			const album = await this.prismaService.album.findUnique({
+				where: { id: albumId },
+				select: { _count: { select: { likes: true, tracks: true } } }
+			});
+
+			await this.cacheManager.set(
+				`album:${albumId}`,
+				JSON.stringify({
+					likes: album._count.likes,
+					tracks: album._count.tracks
+				})
+			);
+		} else {
+			const parsedCount = JSON.parse(_count);
+			await this.cacheManager.set(
+				`album:${albumId}`,
+				JSON.stringify({
+					likes: parsedCount.likes - 1,
+					tracks: parsedCount.tracks
+				})
+			);
+		}
 	}
 }

@@ -42,29 +42,36 @@ export class TrackService {
 
 	async getMany(
 		currentUserId: number,
-		userId?: number,
-		take?: number,
-		sort?: 'popular'
+		userId: number,
+		take = 50,
+		lastId?: number
 	) {
-		if (sort === 'popular') {
-			return await this.prismaService.track.findMany({
-				where: { userId },
-				orderBy: { plays: 'desc' },
-				take,
-				include: {
-					likes: { where: { userId: currentUserId }, select: { addedAt: true } }
-				}
-			});
-		} else {
-			return await this.prismaService.track.findMany({
-				where: { userId },
-				orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-				take,
-				include: {
-					likes: { where: { userId: currentUserId }, select: { addedAt: true } }
-				}
-			});
-		}
+		return await this.prismaService.track.findMany({
+			where: { userId, id: { lt: lastId } },
+			orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+			take,
+			include: {
+				likes: { where: { userId: currentUserId }, select: { addedAt: true } }
+			}
+		});
+	}
+
+	async getManyPopular(
+		currentUserId: number,
+		userId: number,
+		take = 50,
+		lastId?: number
+	) {
+		const cursor = lastId ? { id: lastId } : undefined;
+		return await this.prismaService.track.findMany({
+			where: { userId },
+			orderBy: { plays: 'desc' },
+			take,
+			include: {
+				likes: { where: { userId: currentUserId }, select: { addedAt: true } }
+			},
+			cursor
+		});
 	}
 
 	async getManyIds(userId: number, trackIdToExclude: number) {

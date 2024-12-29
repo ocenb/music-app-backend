@@ -9,6 +9,9 @@ import { AddTrackDto, UpdateTrackPositionDto } from './album-track.dto';
 import { PrismaService } from 'src/prisma.service';
 import { AlbumService } from '../album.service';
 import { TrackService } from 'src/track/track.service';
+import { AlbumTrackRelation } from './album-track.entities';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class AlbumTrackService {
@@ -17,7 +20,8 @@ export class AlbumTrackService {
 		@Inject(forwardRef(() => AlbumService))
 		private readonly albumService: AlbumService,
 		@Inject(forwardRef(() => TrackService))
-		private readonly trackService: TrackService
+		private readonly trackService: TrackService,
+		@Inject(CACHE_MANAGER) private cacheManager: Cache
 	) {}
 
 	async getMany(albumId: number, take?: number) {
@@ -121,6 +125,7 @@ export class AlbumTrackService {
 		addTrackDto: AddTrackDto
 	) {
 		const { position } = addTrackDto;
+
 		const album = await this.albumService.validateAlbum(albumId);
 		this.albumService.checkPermission(userId, album.userId);
 		const trackById = await this.trackService.validateTrack(trackId);
@@ -133,13 +138,22 @@ export class AlbumTrackService {
 		if (trackInAlbum) {
 			throw new ConflictException('Track already in album');
 		}
+
 		const lastPositionTrack = await this.prismaService.albumTrack.findFirst({
 			orderBy: { position: 'desc' },
 			where: { albumId }
 		});
 		const lastPosition = lastPositionTrack ? lastPositionTrack.position : 0;
+
+		let albumTrackRelation: {
+			albumId: number;
+			trackId: number;
+			position: number;
+			addedAt: Date;
+		};
+
 		if (!position || position > lastPosition) {
-			return await this.prismaService.albumTrack.create({
+			albumTrackRelation = await this.prismaService.albumTrack.create({
 				data: { ...addTrackDto, trackId, albumId, position: lastPosition + 1 }
 			});
 		} else {
@@ -147,10 +161,20 @@ export class AlbumTrackService {
 				data: { position: { increment: 1 } },
 				where: { position: { gte: position } }
 			});
-			return await this.prismaService.albumTrack.create({
+			albumTrackRelation = await this.prismaService.albumTrack.create({
 				data: { ...addTrackDto, trackId, albumId, position }
 			});
 		}
+
+		const _count: { likes: number; tracks: number } = JSON.parse(
+			await this.cacheManager.get(`album:${album.id}`)
+		);
+		await this.cacheManager.set(
+			`album:${album.id}`,
+			JSON.stringify({ likes: _count.likes, tracks: _count.tracks + 1 })
+		);
+
+		return albumTrackRelation;
 	}
 
 	async updateTrackPosition(

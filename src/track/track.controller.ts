@@ -43,6 +43,7 @@ import { Track, TrackWithLiked } from './track.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Response } from 'express';
+import { ParseTakePipe } from 'src/pipes/parse-take.pipe';
 
 @ApiTags('Track')
 @Auth()
@@ -91,11 +92,31 @@ export class TrackController {
 	})
 	async getMany(
 		@User('id') currentUserId: number,
-		@Query('userId', ParseIntOptionalPipe) userId?: number,
-		@Query('take', ParseIntOptionalPipe) take?: number,
-		@Query('sort') sort?: 'popular'
+		@Query('userId', ParseIntPipe) userId: number,
+		@Query('take', ParseTakePipe) take?: number,
+		@Query('lastId', ParseIntOptionalPipe) lastId?: number
 	) {
-		return await this.trackService.getMany(currentUserId, userId, take, sort);
+		return await this.trackService.getMany(currentUserId, userId, take, lastId);
+	}
+
+	@Get('popular')
+	@ApiOperation({ summary: 'Gets many popular tracks' })
+	@ApiResponse({
+		status: 200,
+		type: [TrackWithLiked]
+	})
+	async getManyPopular(
+		@User('id') currentUserId: number,
+		@Query('userId', ParseIntPipe) userId: number,
+		@Query('take', ParseTakePipe) take?: number,
+		@Query('lastId', ParseIntOptionalPipe) lastId?: number
+	) {
+		return await this.trackService.getManyPopular(
+			currentUserId,
+			userId,
+			take,
+			lastId
+		);
 	}
 
 	@Get('ids')
