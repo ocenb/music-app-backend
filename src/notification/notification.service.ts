@@ -29,11 +29,12 @@ export class NotificationService {
 		});
 	}
 
-	async getAll(userId: number) {
+	async getMany(userId: number, take?: number, lastId?: number) {
 		return await this.prismaService.userNotification.findMany({
-			where: { userId },
+			where: { userId, notificationId: { lt: lastId } },
 			orderBy: { notification: { createdAt: 'desc' } },
-			select: { notification: true }
+			select: { notification: true },
+			take
 		});
 	}
 

@@ -29,6 +29,7 @@ import { Response } from 'express';
 import { UserPrivate, UserPublic } from './user.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ParseTakePipe } from 'src/pipes/parse-take.pipe';
 
 @ApiTags('User')
 @Auth()
@@ -58,8 +59,11 @@ export class UserController {
 	@Get()
 	@ApiOperation({ summary: 'Gets multiple users' })
 	@ApiResponse({ status: 200, type: [UserPublic] })
-	async getMany(@Query('take', ParseIntOptionalPipe) take?: number) {
-		return await this.userService.getMany(take);
+	async getMany(
+		@Query('take', ParseTakePipe) take?: number,
+		@Query('lastId', ParseIntOptionalPipe) lastId?: number
+	) {
+		return await this.userService.getMany(take, lastId);
 	}
 
 	@Patch()

@@ -35,6 +35,7 @@ import {
 import { Playlist, PlaylistFull } from './playlist.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ParseTakePipe } from 'src/pipes/parse-take.pipe';
 
 @ApiTags('Playlist')
 @Auth()
@@ -42,7 +43,7 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
 export class PlaylistController {
 	constructor(private readonly playlistService: PlaylistService) {}
 
-	@Get(':playlistId')
+	@Get()
 	@ApiOperation({ summary: 'Gets one playlist' })
 	@ApiResponse({ status: 200, type: PlaylistFull })
 	async getOne(
@@ -52,14 +53,15 @@ export class PlaylistController {
 		return await this.playlistService.getOne(username, changeableId);
 	}
 
-	@Get()
+	@Get('many')
 	@ApiOperation({ summary: 'Gets multiple playlists' })
 	@ApiResponse({ status: 200, type: [Playlist] })
 	async getMany(
-		@Query('userId', ParseIntOptionalPipe) userId?: number,
-		@Query('take', ParseIntOptionalPipe) take?: number
+		@Query('userId', ParseIntPipe) userId: number,
+		@Query('take', ParseTakePipe) take?: number,
+		@Query('lastId', ParseIntOptionalPipe) lastId?: number
 	) {
-		return await this.playlistService.getMany(userId, take);
+		return await this.playlistService.getMany(userId, take, lastId);
 	}
 
 	@Post()

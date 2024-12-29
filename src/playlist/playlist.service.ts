@@ -28,9 +28,9 @@ export class PlaylistService {
 		return playlist;
 	}
 
-	async getMany(userId?: number, take?: number) {
+	async getMany(userId: number, take = 50, lastId?: number) {
 		return await this.prismaService.playlist.findMany({
-			where: { userId },
+			where: { userId, id: { lt: lastId } },
 			take
 		});
 	}

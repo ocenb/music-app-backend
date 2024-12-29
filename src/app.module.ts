@@ -1,5 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { TrackModule } from './track/track.module';
 import { PlaylistModule } from './playlist/playlist.module';
@@ -11,6 +11,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AuthMiddleware } from './auth/auth.middleware';
 import { AlbumModule } from './album/album.module';
 import { NotificationModule } from './notification/notification.module';
+import { CacheModule, CacheStore } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-yet';
 
 @Module({
 	imports: [
@@ -19,6 +21,24 @@ import { NotificationModule } from './notification/notification.module';
 			rootPath: join(__dirname, '..', '..', 'static', 'images')
 		}),
 		ScheduleModule.forRoot(),
+		CacheModule.registerAsync({
+			imports: [ConfigModule],
+			inject: [ConfigService],
+			isGlobal: true,
+			useFactory: async (configService: ConfigService) => {
+				const store = await redisStore({
+					socket: {
+						host: configService.get('REDIS_HOST'),
+						port: configService.get('REDIS_PORT')
+					}
+				});
+
+				return {
+					store: store as unknown as CacheStore,
+					ttl: 0
+				};
+			}
+		}),
 		AlbumModule,
 		AuthModule,
 		FileModule,
