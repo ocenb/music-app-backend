@@ -8,6 +8,7 @@ import { PlaylistTrackModule } from 'src/playlist/playlist-track/playlist-track.
 import { multerConfig } from 'config/multer.config';
 import { ConfigModule } from '@nestjs/config';
 import { AlbumTrackModule } from 'src/album/album-track/album-track.module';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
 	controllers: [TrackController],
@@ -17,7 +18,8 @@ import { AlbumTrackModule } from 'src/album/album-track/album-track.module';
 		forwardRef(() => PlaylistTrackModule),
 		FileModule,
 		ConfigModule,
-		AlbumTrackModule
+		AlbumTrackModule,
+		NotificationModule
 	],
 	exports: [TrackService]
 })

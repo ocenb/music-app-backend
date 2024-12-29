@@ -17,6 +17,7 @@ model User {
     tracks           Track[]
     playlists        Playlist[]
     albums           Album[]
+    notifications    UserNotification[]
     followers        UserFollower[]      @relation(name: "user_followers")
     following        UserFollower[]      @relation(name: "user_following")
     likedTracks      UserLikedTrack[]
@@ -105,6 +106,24 @@ model Playlist {
     @@unique([userId, changeableId])
     @@unique([userId, title])
     @@map("playlist")
+}
+
+model Notification {
+    id        Int                @id @default(autoincrement())
+    message   String
+    link      String
+    users     UserNotification[]
+    createdAt DateTime           @default(now()) @map("created_at")
+}
+
+model UserNotification {
+    user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId         Int          @map("user_id")
+    notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+    notificationId Int          @map("notification_id")
+
+    @@id([userId, notificationId])
+    @@map("user_notification")
 }
 
 model UserFollower {

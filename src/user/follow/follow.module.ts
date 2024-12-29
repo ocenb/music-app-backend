@@ -5,8 +5,9 @@ import { PrismaService } from 'src/prisma.service';
 import { UserModule } from '../user.module';
 
 @Module({
-  controllers: [FollowController],
-  providers: [FollowService, PrismaService],
-  imports: [forwardRef(() => UserModule)]
+	controllers: [FollowController],
+	providers: [FollowService, PrismaService],
+	imports: [forwardRef(() => UserModule)],
+	exports: [FollowService]
 })
 export class FollowModule {}

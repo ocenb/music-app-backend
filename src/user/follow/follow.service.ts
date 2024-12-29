@@ -1,4 +1,9 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+	ConflictException,
+	forwardRef,
+	Inject,
+	Injectable
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { UserService } from '../user.service';
 
@@ -6,8 +11,22 @@ import { UserService } from '../user.service';
 export class FollowService {
 	constructor(
 		private readonly prismaService: PrismaService,
+		@Inject(forwardRef(() => UserService))
 		private readonly userService: UserService
 	) {}
+
+	async getManyFollowersIds(userId: number) {
+		return await this.prismaService.userFollower.findMany({
+			where: { followingId: userId },
+			select: {
+				follower: {
+					select: {
+						id: true
+					}
+				}
+			}
+		});
+	}
 
 	async getManyFollowers(userId: number, take?: number) {
 		return await this.prismaService.userFollower.findMany({

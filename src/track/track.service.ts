@@ -12,6 +12,7 @@ import { FileService } from 'src/file/file.service';
 import { PlaylistTrackService } from 'src/playlist/playlist-track/playlist-track.service';
 import { AlbumTrackService } from 'src/album/album-track/album-track.service';
 import { TrackToAdd } from 'src/album/album.dto';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class TrackService {
@@ -20,7 +21,8 @@ export class TrackService {
 		private readonly fileService: FileService,
 		@Inject(forwardRef(() => PlaylistTrackService))
 		private readonly playlistTrackService: PlaylistTrackService,
-		private readonly albumTrackService: AlbumTrackService
+		private readonly albumTrackService: AlbumTrackService,
+		private readonly notificationService: NotificationService
 	) {}
 
 	async streamAudio(trackId: number) {
@@ -100,6 +102,7 @@ export class TrackService {
 
 	async upload(
 		userId: number,
+		username: string,
 		uploadTrackDto: UploadTrackDto,
 		files: UploadedFilesDto
 	) {
@@ -116,7 +119,7 @@ export class TrackService {
 			this.fileService.deleteFileByPath(audioFile.path);
 			throw err;
 		}
-		return await this.prismaService.track.create({
+		const newTrack = await this.prismaService.track.create({
 			data: {
 				user: { connect: { id: userId } },
 				duration,
@@ -125,6 +128,8 @@ export class TrackService {
 				...uploadTrackDto
 			}
 		});
+		this.notificationService.create(userId, username, uploadTrackDto, 'track');
+		return newTrack;
 	}
 
 	async uploadMany(

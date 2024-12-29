@@ -7,16 +7,18 @@ import { multerConfig } from 'config/multer.config';
 import { FileModule } from 'src/file/file.module';
 import { AlbumTrackModule } from './album-track/album-track.module';
 import { TrackModule } from 'src/track/track.module';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
-  controllers: [AlbumController],
-  providers: [AlbumService, PrismaService],
-  imports: [
-    MulterModule.register(multerConfig),
-    forwardRef(() => AlbumTrackModule),
-    forwardRef(() => TrackModule),
-    FileModule
-  ],
-  exports: [AlbumService]
+	controllers: [AlbumController],
+	providers: [AlbumService, PrismaService],
+	imports: [
+		MulterModule.register(multerConfig),
+		forwardRef(() => AlbumTrackModule),
+		forwardRef(() => TrackModule),
+		FileModule,
+		NotificationModule
+	],
+	exports: [AlbumService]
 })
 export class AlbumModule {}
