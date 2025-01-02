@@ -53,21 +53,24 @@ export class TrackController {
 
 	@Get('stream/:trackId')
 	@ApiOperation({ summary: 'Streams an audio file' })
-	@ApiResponse({ status: 200, type: StreamableFile })
+	@ApiResponse({
+		status: 200,
+		content: { 'audio/webm': { example: 'binary data' } }
+	})
 	async streamAudio(
 		@Res({ passthrough: true }) res: Response,
 		@Param('trackId') trackId: number
 	) {
 		const { streamableFile, fileName, size } =
 			await this.trackService.streamAudio(trackId);
+
 		res.set({
-			'Access-Control-Allow-Origin': '*', // ??
 			'Accept-Ranges': 'bytes',
 			'Content-Type': 'audio/webm',
 			'Content-Length': size,
-			'Content-Range': `0-${size}`,
 			'Content-Disposition': `inline; filename=${fileName}`
 		});
+
 		return streamableFile;
 	}
 
@@ -161,7 +164,7 @@ export class TrackController {
 		);
 	}
 
-	@Post(':trackId/add-play')
+	@Patch(':trackId/add-play')
 	@HttpCode(204)
 	@ApiOperation({
 		summary: 'Adds one play to track'

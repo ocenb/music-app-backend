@@ -33,6 +33,7 @@ export class LikedTrackService {
 
 	async getManyIds(userId: number, trackIdToExclude: number) {
 		const likedTrack = await this.validateLikedTrack(userId, trackIdToExclude);
+
 		const prevTracks = await this.prismaService.userLikedTrack.findMany({
 			where: {
 				userId,
@@ -44,6 +45,7 @@ export class LikedTrackService {
 			},
 			orderBy: { addedAt: 'desc' }
 		});
+
 		const nextTracks = await this.prismaService.userLikedTrack.findMany({
 			where: {
 				userId,
@@ -55,14 +57,17 @@ export class LikedTrackService {
 			},
 			orderBy: { addedAt: 'desc' }
 		});
+
 		const prevIds: number[] = [];
 		prevTracks.map((obj) => {
 			prevIds.push(obj.track.id);
 		});
+
 		const nextIds: number[] = [];
 		nextTracks.map((obj) => {
 			nextIds.push(obj.track.id);
 		});
+
 		return { prevIds, nextIds };
 	}
 
@@ -74,6 +79,7 @@ export class LikedTrackService {
 		if (likedTrack) {
 			throw new BadRequestException('Track is already liked');
 		}
+
 		await this.prismaService.userLikedTrack.create({
 			data: { userId, trackId }
 		});
@@ -81,6 +87,7 @@ export class LikedTrackService {
 
 	async remove(userId: number, trackId: number) {
 		await this.validateLikedTrack(userId, trackId);
+
 		await this.prismaService.userLikedTrack.delete({
 			where: { userId_trackId: { userId, trackId } }
 		});
@@ -94,6 +101,7 @@ export class LikedTrackService {
 		if (!likedTrack) {
 			throw new NotFoundException("Track is not in this user's liked tracks");
 		}
+
 		return likedTrack;
 	}
 }

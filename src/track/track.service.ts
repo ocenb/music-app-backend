@@ -11,7 +11,6 @@ import { UpdateTrackDto, UploadedFilesDto, UploadTrackDto } from './track.dto';
 import { FileService } from 'src/file/file.service';
 import { PlaylistTrackService } from 'src/playlist/playlist-track/playlist-track.service';
 import { AlbumTrackService } from 'src/album/album-track/album-track.service';
-import { TrackToAdd } from 'src/album/album.dto';
 import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
@@ -27,7 +26,9 @@ export class TrackService {
 
 	async streamAudio(trackId: number) {
 		const track = await this.validateTrack(trackId);
+
 		const { streamableFile, size } = this.fileService.streamAudio(track.audio);
+
 		return { streamableFile, fileName: track.audio, size };
 	}
 
@@ -63,6 +64,7 @@ export class TrackService {
 		lastId?: number
 	) {
 		const cursor = lastId ? { id: lastId } : undefined;
+
 		return await this.prismaService.track.findMany({
 			where: { userId },
 			orderBy: { plays: 'desc' },
@@ -76,6 +78,7 @@ export class TrackService {
 
 	async getManyIds(userId: number, trackIdToExclude: number) {
 		this.validateTrack(trackIdToExclude);
+
 		const prevTracks = await this.prismaService.track.findMany({
 			where: { userId, id: { gt: trackIdToExclude } },
 			select: { id: true },
@@ -86,14 +89,17 @@ export class TrackService {
 			select: { id: true },
 			orderBy: { createdAt: 'desc' }
 		});
+
 		const prevIds: number[] = [];
 		prevTracks.map((obj) => {
 			prevIds.push(obj.id);
 		});
+
 		const nextIds: number[] = [];
 		nextTracks.map((obj) => {
 			nextIds.push(obj.id);
 		});
+
 		return { prevIds, nextIds };
 	}
 
@@ -115,9 +121,12 @@ export class TrackService {
 	) {
 		await this.validateTrackTitle(userId, uploadTrackDto.title);
 		await this.validateChangeableId(userId, uploadTrackDto.changeableId);
+
 		const audioFile = await this.fileService.saveAudio(files.audio[0]);
+
 		let duration: number;
 		let imageName: string;
+
 		try {
 			duration = await this.fileService.getTrackDuration(audioFile.path);
 			const imageFile = await this.fileService.saveImage(files.image[0]);
@@ -126,6 +135,7 @@ export class TrackService {
 			this.fileService.deleteFileByPath(audioFile.path);
 			throw err;
 		}
+
 		const newTrack = await this.prismaService.track.create({
 			data: {
 				user: { connect: { id: userId } },
@@ -135,14 +145,16 @@ export class TrackService {
 				...uploadTrackDto
 			}
 		});
+
 		this.notificationService.create(userId, username, uploadTrackDto, 'track');
+
 		return newTrack;
 	}
 
 	async uploadMany(
 		userId: number,
 		username: string,
-		uploadTracksDto: TrackToAdd[],
+		uploadTracksDto: UploadTrackDto[],
 		audios: Express.Multer.File[]
 	) {
 		const data: {
@@ -153,15 +165,19 @@ export class TrackService {
 			title: string;
 			changeableId: string;
 		}[] = [];
+
 		for (let i = 0; i < uploadTracksDto.length; i++) {
 			const trackInfo = uploadTracksDto[i];
+
 			try {
 				await this.validateTrackTitle(userId, trackInfo.title);
 				await this.validateChangeableId(userId, trackInfo.changeableId);
+
 				const audioFile = await this.fileService.saveAudio(audios[i]);
 				const duration = await this.fileService.getTrackDuration(
 					audioFile.path
 				);
+
 				data.push({
 					userId,
 					username,
@@ -174,16 +190,20 @@ export class TrackService {
 				for (const track of data) {
 					await this.fileService.deleteFileByName(track.audio, 'audio');
 				}
+
 				throw err;
 			}
 		}
+
 		await this.prismaService.track.createMany({
 			data
 		});
+
 		let tracksChangeableIds = [];
 		uploadTracksDto.map((track) => {
 			tracksChangeableIds.push(track.changeableId);
 		});
+
 		const tracksIdsObjects = await this.prismaService.track.findMany({
 			where: { changeableId: { in: tracksChangeableIds } },
 			select: { id: true }
@@ -192,21 +212,16 @@ export class TrackService {
 		tracksIdsObjects.map((obj) => {
 			tracksIds.push(obj.id);
 		});
-		tracksIds.sort((a, b) => a - b); //
+		tracksIds.sort((a, b) => a - b);
+
 		return tracksIds;
 	}
 
 	async addPlay(trackId: number) {
 		await this.validateTrack(trackId);
+
 		await this.prismaService.track.update({
 			data: { plays: { increment: 1 } },
-			where: { id: trackId }
-		});
-	}
-
-	async changeImage(trackId: number, image: string) {
-		return await this.prismaService.track.update({
-			data: { image },
 			where: { id: trackId }
 		});
 	}
@@ -233,12 +248,21 @@ export class TrackService {
 		if (updateTrackDto.title) {
 			await this.validateTrackTitle(userId, updateTrackDto.title);
 		}
+
 		let imageName: string;
+
 		if (image) {
+			if (await this.albumTrackService.checkTrackInAlbum(trackId)) {
+				throw new BadRequestException(
+					'Сannot change the image of a track that is in an album'
+				);
+			}
+
 			const imageFile = await this.fileService.saveImage(image);
-			await this.deleteImageIfFirstAlbum(trackId, track.image);
+			await this.fileService.deleteFileByName(track.image, 'images');
 			imageName = imageFile.filename;
 		}
+
 		return await this.prismaService.track.update({
 			data: { image: imageName, ...updateTrackDto },
 			where: { id: trackId }
@@ -261,11 +285,14 @@ export class TrackService {
 			track.userId,
 			'You do not have permission to delete this track'
 		);
+
 		await this.fileService.deleteFileByName(track.audio, 'audio');
-		await this.deleteImageIfFirstAlbum(trackId, track.image);
+		await this.fileService.deleteFileByName(track.image, 'images');
+
 		await this.prismaService.track.delete({
 			where: { id: trackId }
 		});
+
 		await this.playlistTrackService.moveTracksPositions(track.playlists);
 		await this.albumTrackService.moveTracksPositions(track.albums);
 	}
@@ -278,12 +305,15 @@ export class TrackService {
 				albums: { select: { albumId: true, position: true } }
 			}
 		});
+
 		for (const track of tracks) {
 			await this.fileService.deleteFileByName(track.audio, 'audio');
 		}
+
 		await this.prismaService.track.deleteMany({
 			where: { id: { in: tracksIds } }
 		});
+
 		for (const track of tracks) {
 			await this.playlistTrackService.moveTracksPositions(track.playlists);
 			await this.albumTrackService.moveTracksPositions(track.albums);
@@ -299,6 +329,7 @@ export class TrackService {
 		if (!track) {
 			throw new NotFoundException('Track not found');
 		}
+
 		return track;
 	}
 
@@ -325,13 +356,6 @@ export class TrackService {
 			throw new BadRequestException(
 				`You already have a track with the id "${changeableId}".`
 			);
-		}
-	}
-
-	private async deleteImageIfFirstAlbum(trackId: number, trackImage: string) {
-		const firstAlbum = await this.albumTrackService.getFirstAlbum(trackId);
-		if (!firstAlbum || firstAlbum.image !== trackImage) {
-			await this.fileService.deleteFileByName(trackImage, 'images');
 		}
 	}
 }

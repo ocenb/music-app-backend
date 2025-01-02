@@ -7,10 +7,13 @@ export class AuthMiddleware implements NestMiddleware {
 	constructor(private readonly configService: ConfigService) {}
 
 	use(req: Request, res: Response, next: NextFunction) {
-		const accessToken = req.cookies[this.configService.get('ACCESS_TOKEN')];
+		const accessToken =
+			req.cookies[this.configService.getOrThrow<string>('ACCESS_TOKEN')];
+
 		if (accessToken) {
 			req.headers.authorization = `Bearer ${accessToken}`;
 		}
+
 		next();
 	}
 }

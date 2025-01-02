@@ -30,17 +30,20 @@ export class LikedAlbumService {
 
 	async add(userId: number, albumId: number) {
 		await this.albumService.validateAlbum(albumId);
+
 		const likedAlbum = await this.prismaService.userLikedAlbum.findUnique({
 			where: { userId_albumId: { userId, albumId } }
 		});
+
 		if (likedAlbum) {
 			throw new BadRequestException('Album is already liked');
 		}
+
 		await this.prismaService.userLikedAlbum.create({
 			data: { userId, albumId }
 		});
 
-		const _count: string = await this.cacheManager.get(`album:${albumId}`);
+		const _count = await this.cacheManager.get<string>(`album:${albumId}`);
 
 		if (!_count) {
 			const album = await this.prismaService.album.findUnique({
@@ -57,6 +60,7 @@ export class LikedAlbumService {
 			);
 		} else {
 			const parsedCount = JSON.parse(_count);
+
 			await this.cacheManager.set(
 				`album:${albumId}`,
 				JSON.stringify({
@@ -75,11 +79,12 @@ export class LikedAlbumService {
 		if (!likedAlbum) {
 			throw new NotFoundException("Album is not in this user's liked albums");
 		}
+
 		await this.prismaService.userLikedAlbum.delete({
 			where: { userId_albumId: { userId, albumId } }
 		});
 
-		const _count: string = await this.cacheManager.get(`album:${albumId}`);
+		const _count = await this.cacheManager.get<string>(`album:${albumId}`);
 
 		if (!_count) {
 			const album = await this.prismaService.album.findUnique({
@@ -96,6 +101,7 @@ export class LikedAlbumService {
 			);
 		} else {
 			const parsedCount = JSON.parse(_count);
+
 			await this.cacheManager.set(
 				`album:${albumId}`,
 				JSON.stringify({

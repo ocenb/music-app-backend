@@ -60,9 +60,11 @@ export class UserService {
 			where: { username },
 			select: this.selectPublic
 		});
+
 		if (!user) {
 			throw new NotFoundException('User not found');
 		}
+
 		return user;
 	}
 
@@ -71,6 +73,7 @@ export class UserService {
 			where: { username },
 			select: this.selectPublic
 		});
+
 		return user;
 	}
 
@@ -103,7 +106,9 @@ export class UserService {
 				throw new BadRequestException('User with the same name already exists');
 			}
 		}
+
 		let imageName: string;
+
 		if (image) {
 			const imageFile = await this.fileService.saveImage(image);
 			imageName = imageFile.filename;
@@ -111,6 +116,7 @@ export class UserService {
 				await this.fileService.deleteFileByName(user.image, 'images');
 			}
 		}
+
 		await this.prismaService.user.update({
 			data: { image: imageName, ...updateUserDto },
 			where: { id: user.id }
@@ -122,6 +128,7 @@ export class UserService {
 		if (userByEmail) {
 			throw new BadRequestException('User with the same email already exists');
 		}
+
 		return await this.prismaService.user.update({
 			where: { id: userId },
 			data: { email },
@@ -147,9 +154,11 @@ export class UserService {
 
 	async validateUser(userId: number) {
 		const user = await this.getById(userId);
+
 		if (!user) {
 			throw new NotFoundException('User not found');
 		}
+
 		return user;
 	}
 }

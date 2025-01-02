@@ -1,4 +1,3 @@
-import { PartialType } from '@nestjs/swagger';
 import { IsNumber, Min } from 'class-validator';
 
 export class UpdateTrackPositionDto {
@@ -6,5 +5,3 @@ export class UpdateTrackPositionDto {
 	@Min(1)
 	position: number;
 }
-
-export class AddTrackDto extends PartialType(UpdateTrackPositionDto) {}

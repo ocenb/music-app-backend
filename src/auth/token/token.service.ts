@@ -27,9 +27,11 @@ export class TokenService {
 			this.generateTokens({
 				userId
 			});
+
 		await this.prismaService.token.create({
 			data: { id: tokenId, userId, refreshToken, expiresAt }
 		});
+
 		return { accessToken, refreshToken };
 	}
 
@@ -54,36 +56,44 @@ export class TokenService {
 		) {
 			throw new UnauthorizedException('Invalid refresh token');
 		}
+
 		const token = await this.prismaService.token.findUnique({
-			where: { refreshToken } // or ID?
+			where: { id: payload.tokenId }
 		});
 		if (!token) {
 			throw new UnauthorizedException('Invalid refresh token');
 		}
+
 		const user = await this.userService.getById(payload.userId);
+
 		return { user, tokenId: payload.tokenId };
 	}
 
 	private generateTokens(userData: UserData) {
 		const tokenId = uuidv4();
 		const payload = { tokenId, ...userData };
+
 		const accessToken = this.jwtService.sign(payload, {
 			expiresIn: '30d' //change to 30m later
 		});
 		const refreshToken = this.jwtService.sign(payload, {
 			expiresIn: '30d'
 		});
+
 		const expiresAt = new Date();
 		expiresAt.setDate(expiresAt.getDate() + 30);
+
 		return { accessToken, refreshToken, tokenId, expiresAt };
 	}
 
 	@Interval(86400000)
 	async cleanUpTokens() {
 		this.logger.log('Deleting expired tokens...');
+
 		const result = await this.prismaService.token.deleteMany({
 			where: { expiresAt: { lt: new Date() } }
 		});
+
 		this.logger.log(`Deleted ${result.count} expired tokens`);
 	}
 }

@@ -6,7 +6,6 @@ import { MulterModule } from '@nestjs/platform-express';
 import { FileModule } from 'src/file/file.module';
 import { PlaylistTrackModule } from 'src/playlist/playlist-track/playlist-track.module';
 import { multerConfig } from 'config/multer.config';
-import { ConfigModule } from '@nestjs/config';
 import { AlbumTrackModule } from 'src/album/album-track/album-track.module';
 import { NotificationModule } from 'src/notification/notification.module';
 
@@ -17,7 +16,6 @@ import { NotificationModule } from 'src/notification/notification.module';
 		MulterModule.register(multerConfig),
 		forwardRef(() => PlaylistTrackModule),
 		FileModule,
-		ConfigModule,
 		AlbumTrackModule,
 		NotificationModule
 	],

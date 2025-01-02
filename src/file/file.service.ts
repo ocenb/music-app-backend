@@ -9,12 +9,16 @@ import { createReadStream, statSync, promises as fs } from 'fs';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { v4 as uuidv4 } from 'uuid';
 import * as sharp from 'sharp';
+import { ConfigService } from '@nestjs/config';
 
 type FileCategory = 'audio' | 'images';
-ffmpeg.setFfprobePath('C:\\Program files\\ffmpeg\\bin\\ffprobe.exe'); //
 
 @Injectable()
 export class FileService {
+	constructor(private readonly configService: ConfigService) {
+		ffmpeg.setFfprobePath(configService.getOrThrow<string>('FFPROBE_PATH')); //
+	}
+
 	streamAudio(fileName: string) {
 		const filePath = join(
 			__dirname,
@@ -27,26 +31,9 @@ export class FileService {
 		);
 		const file = createReadStream(filePath);
 		const size = statSync(filePath).size;
+
 		return { streamableFile: new StreamableFile(file), size };
 	}
-
-	// async getAudioDuration(audio: Express.Multer.File) {
-	// 	const fileFormat = extname(audio.originalname).toLowerCase();
-	// 	const fileName = uuidv4() + fileFormat;
-	// 	const filePath = join(
-	// 		__dirname,
-	// 		'..',
-	// 		'..',
-	// 		'..',
-	// 		'static',
-	// 		'audio',
-	// 		fileName
-	// 	);
-	// 	await this.writeFile(filePath, audio.buffer);
-	// 	const duration = await this.getTrackDuration(filePath);
-	// 	await this.deleteFileByPath(filePath);
-	// 	return duration;
-	// }
 
 	async saveAudio(file: Express.Multer.File): Promise<Express.Multer.File> {
 		const fileFormat = extname(file.originalname).toLowerCase();
@@ -61,9 +48,12 @@ export class FileService {
 		const uuid = uuidv4();
 		const fileName = uuid + fileFormat;
 		const filePath = join(fileDestination, fileName);
+
 		const outputFileName = uuid + '.webm';
 		const outputFilePath = join(fileDestination, outputFileName);
+
 		await this.writeFile(filePath, file.buffer);
+
 		if (fileFormat !== '.webm') {
 			return new Promise((resolve, reject) => {
 				ffmpeg(filePath)
@@ -71,12 +61,15 @@ export class FileService {
 					.audioCodec('libvorbis')
 					.on('end', () => {
 						this.deleteFileByPath(filePath);
+
 						file.filename = outputFileName;
 						file.path = outputFilePath;
+
 						resolve(file);
 					})
 					.on('error', () => {
 						this.deleteFileByPath(filePath);
+
 						reject(
 							new InternalServerErrorException('Error while converting file')
 						);
@@ -86,6 +79,7 @@ export class FileService {
 		} else {
 			file.filename = fileName;
 			file.path = filePath;
+
 			return file;
 		}
 	}
@@ -113,11 +107,13 @@ export class FileService {
 
 		file.filename = fileName;
 		file.path = filePath;
+
 		return file;
 	}
 
 	async deleteFileByPath(filePath: string) {
 		await this.checkIsFileExists(filePath);
+
 		try {
 			await fs.rm(filePath);
 		} catch (err) {
@@ -135,6 +131,7 @@ export class FileService {
 			category,
 			fileName
 		);
+
 		if (category === 'images') {
 			await this.deleteFileByPath(`${filePath}_250x250.jpg`);
 			await this.deleteFileByPath(`${filePath}_50x50.jpg`);
@@ -149,7 +146,9 @@ export class FileService {
 				if (err) {
 					return reject(err);
 				}
+
 				const duration = metadata.format.duration;
+
 				resolve(Math.round(duration));
 			});
 		});

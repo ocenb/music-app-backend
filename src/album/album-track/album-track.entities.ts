@@ -7,11 +7,3 @@ export class TrackInAlbum {
 	@ApiDate()
 	addedAt: string;
 }
-
-export class AlbumTrackRelation {
-	position: number;
-	trackId: number;
-	albumId: number;
-	@ApiDate()
-	addedAt: string;
-}

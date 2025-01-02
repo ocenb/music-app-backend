@@ -14,6 +14,7 @@ import { AlbumTrackService } from './album-track/album-track.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { AlbumFull } from './album.entities';
 
 @Injectable()
 export class AlbumService {
@@ -32,11 +33,12 @@ export class AlbumService {
 		const album = await this.prismaService.album.findUnique({
 			where: { username_changeableId: { changeableId, username } }
 		});
+
 		if (!album) {
 			throw new NotFoundException('Album not found');
 		}
 
-		const _count: string = await this.cacheManager.get(`album:${album.id}`);
+		const _count = await this.cacheManager.get<string>(`album:${album.id}`);
 
 		if (!_count) {
 			const album2 = await this.prismaService.album.findUnique({
@@ -62,9 +64,11 @@ export class AlbumService {
 		const album = await this.prismaService.album.findUnique({
 			where: { id: albumId }
 		});
+
 		if (!album) {
 			throw new NotFoundException('Album not found');
 		}
+
 		return album;
 	}
 
@@ -83,21 +87,25 @@ export class AlbumService {
 		audios: Express.Multer.File[]
 	) {
 		const { title, changeableId, type, tracks } = createAlbumDto;
+
 		await this.validateAlbumTitle(userId, title);
 		await this.validateChangeableId(userId, changeableId);
+
 		const trackIds = await this.trackService.uploadMany(
 			userId,
 			username,
 			tracks,
 			audios
 		);
+
 		const imageFile = await this.fileService.saveImage(image);
 		await this.trackService.changeImages(trackIds, imageFile.filename);
 
 		let createManyData: { position: number; trackId: number }[] = [];
+
 		for (let i = 0; i < trackIds.length; i++) {
 			createManyData.push({
-				position: tracks[i].position,
+				position: i + 1,
 				trackId: trackIds[i]
 			});
 		}
@@ -110,19 +118,14 @@ export class AlbumService {
 				changeableId,
 				image: imageFile.filename,
 				tracks: { createMany: { data: createManyData } }
-			},
-			include: {
-				tracks: { orderBy: { position: 'asc' }, select: { track: true } },
-				_count: { select: { likes: true, tracks: true } }
 			}
 		});
 
-		console.log('album created');
 		await this.cacheManager.set(
 			`album:${album.id}`,
-			JSON.stringify({ likes: 0, tracks: createManyData.length + 1 })
+			JSON.stringify({ likes: 0, tracks: createManyData.length })
 		);
-		console.log('cache seted');
+
 		this.notificationService.create(
 			userId,
 			username,
@@ -130,7 +133,7 @@ export class AlbumService {
 			'album'
 		);
 
-		return album;
+		return { ...album, _count: { likes: 0, tracks: createManyData.length } };
 	}
 
 	async update(
@@ -147,20 +150,19 @@ export class AlbumService {
 		if (updateAlbumDto.changeableId) {
 			await this.validateChangeableId(userId, updateAlbumDto.changeableId);
 		}
+
 		let imageName: string;
+
 		if (image) {
 			const imageFile = await this.fileService.saveImage(image);
-			await this.fileService.deleteFileByName(album.image, 'images');
 			imageName = imageFile.filename;
-			const albumTracks = await this.albumTrackService.getAllRelations(albumId);
-			const tracksIds: number[] = [];
-			for (const { trackId } of albumTracks) {
-				if (await this.albumTrackService.checkFirstAlbum(trackId, albumId)) {
-					tracksIds.push(trackId);
-				}
-			}
+
+			const tracksIds = await this.albumTrackService.getAllTracksIds(albumId);
+
 			await this.trackService.changeImages(tracksIds, imageFile.filename);
+			await this.fileService.deleteFileByName(album.image, 'images');
 		}
+
 		return await this.prismaService.album.update({
 			data: { image: imageName, ...updateAlbumDto },
 			where: { id: albumId }
@@ -170,31 +172,17 @@ export class AlbumService {
 	async delete(userId: number, albumId: number) {
 		const album = await this.validateAlbum(albumId);
 		this.checkPermission(userId, album.userId);
-		const albumTracks = await this.albumTrackService.getAllRelations(albumId);
-		const tracksToDelete: number[] = [];
-		const tracksToChangeImage: number[] = [];
-		let secondAlbumImage: string;
-		for (const { trackId } of albumTracks) {
-			if (await this.albumTrackService.checkFirstAlbum(trackId, albumId)) {
-				if (await this.albumTrackService.checkTheOnlyAlbum(trackId)) {
-					tracksToDelete.push(trackId);
-				} else {
-					const secondAlbum =
-						await this.albumTrackService.getSecondAlbum(trackId);
-					secondAlbumImage = secondAlbum.image;
-					tracksToChangeImage.push(trackId);
-				}
-			}
-		}
-		await this.trackService.deleteMany(tracksToDelete);
-		await this.trackService.changeImages(tracksToChangeImage, secondAlbumImage);
+
+		const tracksIds = await this.albumTrackService.getAllTracksIds(albumId);
+
+		await this.trackService.deleteMany(tracksIds);
 		await this.fileService.deleteFileByName(album.image, 'images');
+
 		await this.prismaService.album.delete({
 			where: { id: albumId }
 		});
-		console.log('album deleted');
+
 		await this.cacheManager.del(`album:${album.id}`);
-		console.log('cache deleted');
 	}
 
 	async deleteAllUserAlbums(userId: number) {
@@ -203,22 +191,25 @@ export class AlbumService {
 		});
 
 		let keys: string[] = [];
+
 		albums.map((album) => {
 			keys.push(`album:${album.id}`);
 		});
 
 		await this.prismaService.album.deleteMany({ where: { userId } });
-		// const keys = await this.cacheManager.store.keys(`album:*`);
-		await this.cacheManager.store.mdel(...keys); //
+
+		await this.cacheManager.store.mdel(...keys);
 	}
 
 	async validateAlbum(albumId: number) {
 		const album = await this.prismaService.album.findUnique({
 			where: { id: albumId }
 		});
+
 		if (!album) {
 			throw new NotFoundException('Album not found');
 		}
+
 		return album;
 	}
 
@@ -226,6 +217,7 @@ export class AlbumService {
 		const album = await this.prismaService.album.findUnique({
 			where: { userId_title: { userId, title } }
 		});
+
 		if (album) {
 			throw new BadRequestException(
 				`Album with the title "${title}" already exists.`
@@ -237,6 +229,7 @@ export class AlbumService {
 		const album = await this.prismaService.album.findUnique({
 			where: { userId_changeableId: { userId, changeableId } }
 		});
+
 		if (album) {
 			throw new BadRequestException(
 				`You already have an album with the id "${changeableId}".`
