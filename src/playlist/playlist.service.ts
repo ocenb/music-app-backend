@@ -22,9 +22,11 @@ export class PlaylistService {
 				_count: { select: { savedByUsers: true, tracks: true } }
 			}
 		});
+
 		if (!playlist) {
 			throw new NotFoundException('Playlist not found');
 		}
+
 		return playlist;
 	}
 
@@ -42,7 +44,9 @@ export class PlaylistService {
 	) {
 		await this.validatePlaylistTitle(userId, createPlaylistDto.title);
 		await this.validateChangeableId(userId, createPlaylistDto.changeableId);
+
 		const imageFile = await this.fileService.saveImage(image);
+
 		return await this.prismaService.playlist.create({
 			data: {
 				user: { connect: { id: userId } },
@@ -65,12 +69,15 @@ export class PlaylistService {
 		if (updatePlaylistDto.changeableId) {
 			await this.validateChangeableId(userId, updatePlaylistDto.changeableId);
 		}
+
 		let imageName: string;
+
 		if (image) {
 			const imageFile = await this.fileService.saveImage(image);
 			imageName = imageFile.filename;
 			await this.fileService.deleteFileByName(playlist.image, 'images');
 		}
+
 		return await this.prismaService.playlist.update({
 			data: { image: imageName, ...updatePlaylistDto },
 			where: { id: playlistId }
@@ -79,7 +86,9 @@ export class PlaylistService {
 
 	async delete(userId: number, playlistId: number) {
 		const playlist = await this.validatePlaylist(playlistId, userId);
+
 		await this.fileService.deleteFileByName(playlist.image, 'images');
+
 		await this.prismaService.playlist.delete({
 			where: { id: playlistId }
 		});
@@ -92,6 +101,7 @@ export class PlaylistService {
 				'You do not have permission to change this playlist'
 			);
 		}
+
 		return playlist;
 	}
 
@@ -102,6 +112,7 @@ export class PlaylistService {
 		if (!playlist) {
 			throw new NotFoundException('Playlist not found');
 		}
+
 		return playlist;
 	}
 

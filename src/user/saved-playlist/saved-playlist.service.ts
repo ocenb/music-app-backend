@@ -34,6 +34,7 @@ export class SavedPlaylistService {
 		if (savedPlaylist) {
 			throw new BadRequestException('Playlist is already saved');
 		}
+
 		await this.prismaService.userSavedPlaylist.create({
 			data: { userId, playlistId }
 		});
@@ -51,6 +52,7 @@ export class SavedPlaylistService {
 				"Playlist is not in this user's saved playlists"
 			);
 		}
+
 		await this.prismaService.userSavedPlaylist.delete({
 			where: { userId_playlistId: { userId, playlistId } }
 		});

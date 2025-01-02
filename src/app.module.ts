@@ -16,20 +16,19 @@ import { redisStore } from 'cache-manager-redis-yet';
 
 @Module({
 	imports: [
-		ConfigModule.forRoot(),
+		ConfigModule.forRoot({ isGlobal: true }),
 		ServeStaticModule.forRoot({
 			rootPath: join(__dirname, '..', '..', 'static', 'images')
 		}),
 		ScheduleModule.forRoot(),
 		CacheModule.registerAsync({
-			imports: [ConfigModule],
 			inject: [ConfigService],
 			isGlobal: true,
 			useFactory: async (configService: ConfigService) => {
 				const store = await redisStore({
 					socket: {
-						host: configService.get('REDIS_HOST'),
-						port: configService.get('REDIS_PORT')
+						host: configService.getOrThrow<string>('REDIS_HOST'),
+						port: parseInt(configService.getOrThrow<string>('REDIS_PORT'), 10)
 					}
 				});
 

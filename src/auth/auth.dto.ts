@@ -1,4 +1,5 @@
 import { IsEmail, IsNotIn, IsString, Length, Matches } from 'class-validator';
+import { Password, Username } from 'src/decorators/validation.decorator';
 
 export const restrictedUsernames = [
 	'login',
@@ -15,19 +16,14 @@ export class LoginDto {
 
 	@Length(5, 50)
 	@IsString()
-	@Matches(/^[\w!@#$%^&*?-]*$/, {
-		message: 'Password can only contain letters, numbers and !@#$%^&*?-_'
-	})
+	@Password()
 	password: string;
 }
 
 export class RegisterDto extends LoginDto {
 	@Length(1, 20)
 	@IsString()
-	@Matches(/^[a-z0-9][a-z0-9_-]*$/, {
-		message:
-			'username can only contain lowercase letters, numbers, hyphens, underscores and cannot start with a hyphen or underscore'
-	})
+	@Username()
 	@IsNotIn(restrictedUsernames)
 	username: string;
 }
@@ -40,15 +36,11 @@ export class ChangeEmailDto {
 export class ChangePasswordDto {
 	@Length(5, 50)
 	@IsString()
-	@Matches(/^[\w!@#$%^&*?-]*$/, {
-		message: 'Password can only contain letters, numbers and !@#$%^&*?-_'
-	})
+	@Password()
 	oldPassword: string;
 
 	@Length(5, 50)
 	@IsString()
-	@Matches(/^[\w!@#$%^&*?-]*$/, {
-		message: 'Password can only contain letters, numbers and !@#$%^&*?-_'
-	})
+	@Password()
 	newPassword: string;
 }

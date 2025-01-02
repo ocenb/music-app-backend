@@ -3,12 +3,19 @@ import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
+import helmet from 'helmet';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
-	const port = process.env.PORT;
+
+	const configService = app.get(ConfigService);
+	const port = configService.getOrThrow<string>('PORT');
+	const frontendPort = configService.getOrThrow<string>('FRONTEND_PORT');
+	const url = configService.getOrThrow<string>('URL');
 
 	app.setGlobalPrefix('api');
+	app.use(helmet());
 	app.useGlobalPipes(
 		new ValidationPipe({
 			forbidNonWhitelisted: true,
@@ -18,7 +25,7 @@ async function bootstrap() {
 	);
 	app.use(cookieParser());
 	app.enableCors({
-		origin: ['http://localhost:3000'],
+		origin: [`${url}:${frontendPort}`],
 		credentials: true,
 		exposedHeaders: 'set-cookie'
 	});
@@ -31,7 +38,7 @@ async function bootstrap() {
 	const document = SwaggerModule.createDocument(app, config);
 	SwaggerModule.setup('api/docs', app, document);
 
-	await app.listen(port, () => console.log(`http://localhost:${port}`));
+	await app.listen(port, () => console.log(`${url}:${port}`));
 }
 
 bootstrap();

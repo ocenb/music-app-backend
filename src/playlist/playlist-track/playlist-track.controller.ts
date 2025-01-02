@@ -53,7 +53,7 @@ export class PlaylistTrackController {
 
 	@Post(':trackId')
 	@ApiOperation({ summary: 'Adds track to a playlist' })
-	@ApiResponse({ status: 200, type: PlaylistTrackRelation })
+	@ApiResponse({ status: 201, type: PlaylistTrackRelation })
 	async add(
 		@User('id') userId: number,
 		@Param('playlistId', ParseIntPipe) playlistId: number,

@@ -41,6 +41,7 @@ export class AuthController {
 		const { accessToken, refreshToken, user } =
 			await this.authService.register(registerDto);
 		this.authService.addTokensToResponse(res, accessToken, refreshToken);
+
 		return user;
 	}
 
@@ -54,6 +55,7 @@ export class AuthController {
 		const { accessToken, refreshToken, user } =
 			await this.authService.login(loginDto);
 		this.authService.addTokensToResponse(res, accessToken, refreshToken);
+
 		return user;
 	}
 
@@ -91,18 +93,21 @@ export class AuthController {
 		@Res({ passthrough: true }) res: Response
 	) {
 		const refreshTokenFromCookies =
-			req.cookies[this.configService.get('REFRESH_TOKEN')];
+			req.cookies[this.configService.getOrThrow<string>('REFRESH_TOKEN')];
 		if (!refreshTokenFromCookies) {
 			this.authService.removeTokensFromResponse(res);
 			throw new UnauthorizedException('Refresh token not passed');
 		}
+
 		try {
 			const { accessToken, refreshToken, user } =
 				await this.authService.refresh(refreshTokenFromCookies);
 			this.authService.addTokensToResponse(res, accessToken, refreshToken);
+
 			return user;
 		} catch (err) {
 			this.authService.removeTokensFromResponse(res);
+
 			throw err;
 		}
 	}
@@ -119,6 +124,7 @@ export class AuthController {
 		const { accessToken, refreshToken, user } =
 			await this.authService.changeEmail(userId, changeEmailDto);
 		this.authService.addTokensToResponse(res, accessToken, refreshToken);
+
 		return user;
 	}
 
@@ -139,6 +145,7 @@ export class AuthController {
 				changePasswordDto
 			);
 		this.authService.addTokensToResponse(res, accessToken, refreshToken);
+
 		return user;
 	}
 }

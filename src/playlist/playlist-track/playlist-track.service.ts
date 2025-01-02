@@ -31,6 +31,7 @@ export class PlaylistTrackService {
 				}
 			}
 		});
+
 		return tracks;
 	}
 
@@ -55,14 +56,17 @@ export class PlaylistTrackService {
 				}
 			}
 		});
+
 		const prevIds: number[] = [];
 		prevTracks.tracks.map((obj) => {
 			prevIds.push(obj.track.id);
 		});
+
 		const nextIds: number[] = [];
 		nextTracks.tracks.map((obj) => {
 			nextIds.push(obj.track.id);
 		});
+
 		return { prevIds, nextIds };
 	}
 
@@ -73,6 +77,7 @@ export class PlaylistTrackService {
 		addTrackDto: AddTrackDto
 	) {
 		const { position } = addTrackDto;
+
 		await this.playlistService.validatePlaylist(playlistId, userId);
 		await this.trackService.validateTrack(trackId);
 		const trackInPlaylist = await this.getOnePlaylistTrackRelation(
@@ -82,11 +87,13 @@ export class PlaylistTrackService {
 		if (trackInPlaylist) {
 			throw new ConflictException('Track already in playlist');
 		}
+
 		const lastPositionTrack = await this.prismaService.playlistTrack.findFirst({
 			orderBy: { position: 'desc' },
 			where: { playlistId }
 		});
 		const lastPosition = lastPositionTrack ? lastPositionTrack.position : 0;
+
 		if (!position || position > lastPosition) {
 			return await this.prismaService.playlistTrack.create({
 				data: {
@@ -101,6 +108,7 @@ export class PlaylistTrackService {
 				data: { position: { increment: 1 } },
 				where: { position: { gte: position } }
 			});
+
 			return await this.prismaService.playlistTrack.create({
 				data: { ...addTrackDto, trackId, playlistId, position }
 			});
@@ -114,11 +122,13 @@ export class PlaylistTrackService {
 		updateTrackPositionDto: UpdateTrackPositionDto
 	) {
 		const { position } = updateTrackPositionDto;
+
 		await this.playlistService.validatePlaylist(playlistId, userId);
 		const trackInPlaylist = await this.validateTrackInPlaylist(
 			playlistId,
 			trackId
 		);
+
 		if (position > trackInPlaylist.position) {
 			await this.prismaService.playlistTrack.updateMany({
 				data: { position: { decrement: 1 } },
@@ -132,6 +142,7 @@ export class PlaylistTrackService {
 		} else {
 			throw new ConflictException('Track already in this position');
 		}
+
 		await this.prismaService.playlistTrack.update({
 			data: { position },
 			where: { playlistId_trackId: { playlistId, trackId } }
@@ -158,9 +169,11 @@ export class PlaylistTrackService {
 	async remove(userId: number, playlistId: number, trackId: number) {
 		await this.playlistService.validatePlaylist(playlistId, userId);
 		await this.validateTrackInPlaylist(playlistId, trackId);
+
 		const removedTrack = await this.prismaService.playlistTrack.delete({
 			where: { playlistId_trackId: { playlistId, trackId } }
 		});
+
 		await this.moveTracksPositions([
 			{ playlistId, position: removedTrack.position }
 		]);
@@ -184,6 +197,7 @@ export class PlaylistTrackService {
 		if (!trackInPlaylist) {
 			throw new NotFoundException('Track is not in this playlist');
 		}
+
 		return trackInPlaylist;
 	}
 }

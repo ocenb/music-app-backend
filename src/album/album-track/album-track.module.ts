@@ -6,9 +6,9 @@ import { TrackModule } from 'src/track/track.module';
 import { AlbumModule } from '../album.module';
 
 @Module({
-  controllers: [AlbumTrackController],
-  providers: [AlbumTrackService, PrismaService],
-  imports: [forwardRef(() => TrackModule), forwardRef(() => AlbumModule)],
-  exports: [AlbumTrackService]
+	controllers: [AlbumTrackController],
+	providers: [AlbumTrackService, PrismaService],
+	imports: [forwardRef(() => TrackModule), forwardRef(() => AlbumModule)],
+	exports: [AlbumTrackService]
 })
 export class AlbumTrackModule {}

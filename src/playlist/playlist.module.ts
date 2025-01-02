@@ -9,14 +9,14 @@ import { TrackModule } from 'src/track/track.module';
 import { multerConfig } from 'config/multer.config';
 
 @Module({
-  controllers: [PlaylistController],
-  providers: [PlaylistService, PrismaService],
-  imports: [
-    MulterModule.register(multerConfig),
-    forwardRef(() => TrackModule),
-    forwardRef(() => PlaylistTrackModule),
-    FileModule
-  ],
-  exports: [PlaylistService]
+	controllers: [PlaylistController],
+	providers: [PlaylistService, PrismaService],
+	imports: [
+		MulterModule.register(multerConfig),
+		forwardRef(() => TrackModule),
+		forwardRef(() => PlaylistTrackModule),
+		FileModule
+	],
+	exports: [PlaylistService]
 })
 export class PlaylistModule {}

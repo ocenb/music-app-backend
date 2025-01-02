@@ -18,8 +18,10 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-	accessTokenName: string = this.configService.get('ACCESS_TOKEN');
-	refreshTokenName: string = this.configService.get('REFRESH_TOKEN');
+	accessTokenName: string =
+		this.configService.getOrThrow<string>('ACCESS_TOKEN');
+	refreshTokenName: string =
+		this.configService.getOrThrow<string>('REFRESH_TOKEN');
 
 	constructor(
 		private readonly tokenService: TokenService,
@@ -32,18 +34,23 @@ export class AuthService {
 		if (userByEmail) {
 			throw new BadRequestException('User with the same email already exists');
 		}
+
 		const userByName = await this.userService.getByNameWithoutError(
 			registerDto.username
 		);
 		if (userByName) {
 			throw new BadRequestException('User with the same name already exists');
 		}
+
 		const hashedPassword = await hash(registerDto.password, 5);
+
 		const user = await this.userService.create({
 			...registerDto,
 			password: hashedPassword
 		});
+
 		const tokens = await this.tokenService.createTokens(user.id);
+
 		return { user, ...tokens };
 	}
 
@@ -53,11 +60,14 @@ export class AuthService {
 			throw new NotFoundException('User with this email does not exist');
 		}
 		const { password, ...user } = userByEmail;
+
 		const isPassCorrect = await compare(loginDto.password, password);
 		if (!isPassCorrect) {
 			throw new UnauthorizedException('Wrong password');
 		}
+
 		const tokens = await this.tokenService.createTokens(user.id);
+
 		return { user, ...tokens };
 	}
 
@@ -72,8 +82,10 @@ export class AuthService {
 	async refresh(oldRefreshToken: string) {
 		const { user, tokenId } =
 			await this.tokenService.validateRefreshToken(oldRefreshToken);
+
 		await this.tokenService.revokeTokenById(tokenId);
 		const tokens = await this.tokenService.createTokens(user.id);
+
 		return { user, ...tokens };
 	}
 
@@ -83,7 +95,9 @@ export class AuthService {
 			changeEmailDto.email
 		);
 		await this.logoutAll(userId);
+
 		const tokens = await this.tokenService.createTokens(userId);
+
 		return { user, ...tokens };
 	}
 
@@ -99,10 +113,14 @@ export class AuthService {
 		if (!isPassCorrect) {
 			throw new UnauthorizedException('Wrong password');
 		}
+
 		const hashedPassword = await hash(changePasswordDto.newPassword, 5);
+
 		const user = await this.userService.changePassword(userId, hashedPassword);
 		await this.logoutAll(userId);
+
 		const tokens = await this.tokenService.createTokens(userId);
+
 		return { user, ...tokens };
 	}
 
@@ -118,38 +136,34 @@ export class AuthService {
 
 		res.cookie(this.accessTokenName, accessToken, {
 			httpOnly: true,
-			domain: this.configService.get('DOMAIN'),
+			domain: this.configService.getOrThrow<string>('DOMAIN'),
 			expires: accessTokenExpiresAt,
 			secure: true,
-			// поставить lax или strict в production
-			sameSite: 'none'
+			sameSite: 'lax'
 		});
 		res.cookie(this.refreshTokenName, refreshToken, {
 			httpOnly: true,
-			domain: this.configService.get('DOMAIN'),
+			domain: this.configService.getOrThrow<string>('DOMAIN'),
 			expires: refreshTokenExpiresAt,
 			secure: true,
-			// поставить lax или strict в production
-			sameSite: 'none'
+			sameSite: 'lax'
 		});
 	}
 
 	removeTokensFromResponse(res: Response) {
 		res.cookie(this.accessTokenName, '', {
 			httpOnly: true,
-			domain: this.configService.get('DOMAIN'),
+			domain: this.configService.getOrThrow<string>('DOMAIN'),
 			expires: new Date(0),
 			secure: true,
-			// поставить lax или strict в production
-			sameSite: 'none'
+			sameSite: 'lax'
 		});
 		res.cookie(this.refreshTokenName, '', {
 			httpOnly: true,
-			domain: this.configService.get('DOMAIN'),
+			domain: this.configService.getOrThrow<string>('DOMAIN'),
 			expires: new Date(0),
 			secure: true,
-			// поставить lax или strict в production
-			sameSite: 'none'
+			sameSite: 'lax'
 		});
 	}
 }

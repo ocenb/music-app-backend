@@ -66,15 +66,19 @@ export class FollowService {
 
 	async check(userId: number, userToCheckId: number) {
 		const follow = await this.getFollow(userId, userToCheckId);
+
 		return follow ? true : false;
 	}
 
 	async follow(userId: number, userToFollowId: number) {
 		await this.userService.validateUser(userToFollowId);
+
 		const follow = await this.getFollow(userId, userToFollowId);
+
 		if (follow) {
 			throw new ConflictException('You are already following this user');
 		}
+
 		return await this.prismaService.userFollower.create({
 			data: { followerId: userId, followingId: userToFollowId }
 		});
@@ -82,9 +86,11 @@ export class FollowService {
 
 	async unfollow(userId: number, userToUnfollowId: number) {
 		const follow = await this.getFollow(userId, userToUnfollowId);
+
 		if (!follow) {
 			throw new ConflictException('You are not following this user');
 		}
+
 		return await this.prismaService.userFollower.delete({
 			where: {
 				followingId_followerId: {
@@ -99,6 +105,7 @@ export class FollowService {
 		const follow = await this.prismaService.userFollower.findUnique({
 			where: { followingId_followerId: { followerId, followingId } }
 		});
+
 		return follow;
 	}
 }

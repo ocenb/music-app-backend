@@ -11,6 +11,7 @@ export class NotificationService {
 		private readonly prismaService: PrismaService,
 		private readonly followService: FollowService
 	) {}
+
 	async create(
 		userId: number,
 		username: string,
@@ -18,6 +19,7 @@ export class NotificationService {
 		type: 'track' | 'album'
 	) {
 		const followers = await this.followService.getManyFollowersIds(userId);
+
 		return await this.prismaService.notification.create({
 			data: {
 				message: `${username} uploaded new ${type}: ${info.title}`,
@@ -42,9 +44,11 @@ export class NotificationService {
 		const notification = await this.prismaService.userNotification.findUnique({
 			where: { userId_notificationId: { userId, notificationId } }
 		});
+
 		if (!notification) {
 			throw new NotFoundException('Notification not found');
 		}
+
 		await this.prismaService.userNotification.delete({
 			where: { userId_notificationId: { userId, notificationId } }
 		});

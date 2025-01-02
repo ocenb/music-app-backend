@@ -18,6 +18,7 @@ export class ParseIntOptionalPipe
 		if (!value) {
 			return undefined;
 		}
+
 		return await this.parseIntPipe.transform(value, metadata);
 	}
 }
