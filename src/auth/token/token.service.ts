@@ -5,6 +5,7 @@ import { Payload, UserData } from './models/payload.model';
 import { UserService } from 'src/user/user.service';
 import { Interval } from '@nestjs/schedule';
 import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class TokenService {
@@ -69,12 +70,16 @@ export class TokenService {
 		return { user, tokenId: payload.tokenId };
 	}
 
+	generateVerificationToken() {
+		return crypto.randomBytes(32).toString('hex');
+	}
+
 	private generateTokens(userData: UserData) {
 		const tokenId = uuidv4();
 		const payload = { tokenId, ...userData };
 
 		const accessToken = this.jwtService.sign(payload, {
-			expiresIn: '30d' //change to 30m later
+			expiresIn: '30m'
 		});
 		const refreshToken = this.jwtService.sign(payload, {
 			expiresIn: '30d'

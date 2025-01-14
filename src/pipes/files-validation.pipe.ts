@@ -3,15 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { extname } from 'path';
 import { UploadedFilesDto } from 'src/track/track.dto';
 
-const audioFormats = [
-	'.mp3',
-	'.aac',
-	'.m4a',
-	'.flac',
-	'.wav',
-	'.aiff',
-	'.webm'
-];
+const audioFormats = ['.mp3', '.aac', '.flac', '.wav', '.aiff', '.webm'];
 const imageFormats = ['.jpg', '.png'];
 
 @Injectable()

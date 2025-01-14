@@ -24,7 +24,7 @@ const messages = {
 };
 
 export function Title(validationOptions?: ValidationOptions) {
-	return function (object: Object, propertyName: string) {
+	return function (object: object, propertyName: string) {
 		registerDecorator({
 			name: 'Title',
 			target: object.constructor,
@@ -43,7 +43,7 @@ export function Title(validationOptions?: ValidationOptions) {
 }
 
 export function ChangeableId(validationOptions?: ValidationOptions) {
-	return function (object: Object, propertyName: string) {
+	return function (object: object, propertyName: string) {
 		registerDecorator({
 			name: 'ChangeableId',
 			target: object.constructor,
@@ -62,7 +62,7 @@ export function ChangeableId(validationOptions?: ValidationOptions) {
 }
 
 export function Password(validationOptions?: ValidationOptions) {
-	return function (object: Object, propertyName: string) {
+	return function (object: object, propertyName: string) {
 		registerDecorator({
 			name: 'Password',
 			target: object.constructor,
@@ -81,7 +81,7 @@ export function Password(validationOptions?: ValidationOptions) {
 }
 
 export function Username(validationOptions?: ValidationOptions) {
-	return function (object: Object, propertyName: string) {
+	return function (object: object, propertyName: string) {
 		registerDecorator({
 			name: 'Username',
 			target: object.constructor,
@@ -107,6 +107,8 @@ export class IsTracksArray implements ValidatorConstraintInterface {
 		}
 
 		const errorMessages: string[] = [];
+		const titles: string[] = [];
+		const changeableIds: string[] = [];
 
 		tracks.forEach((track, index) => {
 			if (Object.keys(track).length !== 2) {
@@ -156,7 +158,22 @@ export class IsTracksArray implements ValidatorConstraintInterface {
 			if (!regex.changeableId.test(track.changeableId)) {
 				errorMessages.push(`${messages.changeableId} (tracks.${index})`);
 			}
+
+			if (track.title) {
+				titles.push(track.title);
+			}
+
+			if (track.changeableId) {
+				changeableIds.push(track.changeableId);
+			}
 		});
+
+		if (
+			new Set(titles).size !== titles.length ||
+			new Set(changeableIds).size !== changeableIds.length
+		) {
+			errorMessages.push('Track titles and ids must be unique');
+		}
 
 		if (errorMessages.length) {
 			throw new BadRequestException(errorMessages);

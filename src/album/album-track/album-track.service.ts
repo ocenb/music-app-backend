@@ -20,13 +20,17 @@ export class AlbumTrackService {
 		private readonly trackService: TrackService
 	) {}
 
-	async getMany(albumId: number, take?: number) {
+	async getMany(currentUserId: number, albumId: number, take?: number) {
 		const album = await this.prismaService.album.findUnique({
 			where: { id: albumId },
 			select: {
 				tracks: {
 					orderBy: { position: 'asc' },
-					select: { track: true, position: true, addedAt: true },
+					select: {
+						track: { include: { likes: { where: { userId: currentUserId } } } },
+						position: true,
+						addedAt: true
+					},
 					take
 				}
 			}

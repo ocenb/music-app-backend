@@ -26,10 +26,11 @@ export class AlbumTrackController {
 	@ApiOperation({ summary: 'Gets multiple tracks in album' })
 	@ApiResponse({ status: 200, type: [TrackInAlbum] })
 	async getMany(
+		@User('id') currentUserId: number,
 		@Param('albumId', ParseIntPipe) albumId: number,
 		@Query('take', ParseIntOptionalPipe) take?: number
 	) {
-		return await this.albumTrackService.getMany(albumId, take);
+		return await this.albumTrackService.getMany(currentUserId, albumId, take);
 	}
 
 	@Get('ids')

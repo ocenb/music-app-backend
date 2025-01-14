@@ -32,10 +32,13 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import { Playlist, PlaylistFull } from './playlist.entities';
+import {
+	Playlist,
+	PlaylistFull,
+	PlaylistWithIsSaved
+} from './playlist.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { ParseTakePipe } from 'src/pipes/parse-take.pipe';
 
 @ApiTags('Playlist')
 @Auth()
@@ -47,10 +50,11 @@ export class PlaylistController {
 	@ApiOperation({ summary: 'Gets one playlist' })
 	@ApiResponse({ status: 200, type: PlaylistFull })
 	async getOne(
+		@User('id') userId: number,
 		@Query('username') username: string,
 		@Query('changeableId') changeableId: string
 	) {
-		return await this.playlistService.getOne(username, changeableId);
+		return await this.playlistService.getOne(userId, username, changeableId);
 	}
 
 	@Get('many')
@@ -58,10 +62,23 @@ export class PlaylistController {
 	@ApiResponse({ status: 200, type: [Playlist] })
 	async getMany(
 		@Query('userId', ParseIntPipe) userId: number,
-		@Query('take', ParseTakePipe) take?: number,
+		@Query('take', ParseIntOptionalPipe) take?: number,
 		@Query('lastId', ParseIntOptionalPipe) lastId?: number
 	) {
 		return await this.playlistService.getMany(userId, take, lastId);
+	}
+
+	@Get('many-with-saved')
+	@ApiOperation({
+		summary: 'Gets multiple user playlists and user saved playlists'
+	})
+	@ApiResponse({ status: 200, type: [PlaylistWithIsSaved] })
+	async getManyWithSaved(
+		@User('id') userId: number,
+		@Query('take', ParseIntOptionalPipe) take?: number,
+		@Query('lastId', ParseIntOptionalPipe) lastId?: number
+	) {
+		return await this.playlistService.getManyWithSaved(userId, take, lastId);
 	}
 
 	@Post()

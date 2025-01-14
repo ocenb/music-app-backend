@@ -13,6 +13,8 @@ import { AlbumModule } from 'src/album/album.module';
 import { TrackModule } from 'src/track/track.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { LikedAlbumModule } from './liked-album/liked-album.module';
+import { PlaylistModule } from 'src/playlist/playlist.module';
+import { SearchModule } from 'src/search/search.module';
 
 @Module({
 	controllers: [UserController],
@@ -28,7 +30,9 @@ import { LikedAlbumModule } from './liked-album/liked-album.module';
 		FileModule,
 		ListeningHistoryModule,
 		AlbumModule,
-		TrackModule
+		TrackModule,
+		PlaylistModule,
+		forwardRef(() => SearchModule)
 	]
 })
 export class UserModule {}

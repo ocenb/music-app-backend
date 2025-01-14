@@ -8,6 +8,7 @@ import { PlaylistTrackModule } from 'src/playlist/playlist-track/playlist-track.
 import { multerConfig } from 'config/multer.config';
 import { AlbumTrackModule } from 'src/album/album-track/album-track.module';
 import { NotificationModule } from 'src/notification/notification.module';
+import { SearchModule } from 'src/search/search.module';
 
 @Module({
 	controllers: [TrackController],
@@ -17,7 +18,8 @@ import { NotificationModule } from 'src/notification/notification.module';
 		forwardRef(() => PlaylistTrackModule),
 		FileModule,
 		AlbumTrackModule,
-		NotificationModule
+		NotificationModule,
+		forwardRef(() => SearchModule)
 	],
 	exports: [TrackService]
 })

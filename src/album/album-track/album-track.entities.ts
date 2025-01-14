@@ -1,9 +1,9 @@
 import { ApiDate } from 'src/decorators/api.decorator';
-import { Track } from 'src/track/track.entities';
+import { TrackWithLiked } from 'src/track/track.entities';
 
 export class TrackInAlbum {
 	position: number;
-	track: Track;
+	track: TrackWithLiked;
 	@ApiDate()
 	addedAt: string;
 }

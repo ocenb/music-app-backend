@@ -32,10 +32,15 @@ export class PlaylistTrackController {
 	@ApiOperation({ summary: 'Gets multiple tracks in playlist' })
 	@ApiResponse({ status: 200, type: [TrackInPlaylist] })
 	async getMany(
+		@User('id') currentUserId: number,
 		@Param('playlistId', ParseIntPipe) playlistId: number,
 		@Query('take', ParseIntOptionalPipe) take?: number
 	) {
-		return await this.playlistTrackService.getMany(playlistId, take);
+		return await this.playlistTrackService.getMany(
+			currentUserId,
+			playlistId,
+			take
+		);
 	}
 
 	@Get('ids')

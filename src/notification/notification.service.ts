@@ -20,10 +20,15 @@ export class NotificationService {
 	) {
 		const followers = await this.followService.getManyFollowersIds(userId);
 
+		const link =
+			type === 'album'
+				? `/${username}/albums/${info.changeableId}`
+				: `/${username}/${info.changeableId}`;
+
 		return await this.prismaService.notification.create({
 			data: {
 				message: `${username} uploaded new ${type}: ${info.title}`,
-				link: info.changeableId,
+				link,
 				users: {
 					create: followers.map(({ follower }) => ({ userId: follower.id }))
 				}
@@ -71,6 +76,6 @@ export class NotificationService {
 			where: { createdAt: { lt: thirtyDaysAgo } }
 		});
 
-		this.logger.log(`Deleted ${result.count} expired tokens`);
+		this.logger.log(`Deleted ${result.count} old notifications`);
 	}
 }

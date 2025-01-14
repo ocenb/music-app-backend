@@ -13,7 +13,6 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Notification } from './notification.entities';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
-import { ParseTakePipe } from 'src/pipes/parse-take.pipe';
 
 @ApiTags('Notification')
 @Auth()
@@ -26,13 +25,13 @@ export class NotificationController {
 	@ApiResponse({ status: 200, type: [Notification] })
 	async getMany(
 		@User('id') userId: number,
-		@Query('take', ParseTakePipe) take?: number,
+		@Query('take', ParseIntOptionalPipe) take?: number,
 		@Query('lastId', ParseIntOptionalPipe) lastId?: number
 	) {
 		return await this.notificationService.getMany(userId, take, lastId);
 	}
 
-	@Delete(':notificationId')
+	@Delete('one/:notificationId')
 	@HttpCode(204)
 	@ApiOperation({ summary: 'Deletes notification' })
 	@ApiResponse({ status: 204 })

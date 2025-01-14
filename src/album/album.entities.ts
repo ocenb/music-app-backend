@@ -16,5 +16,11 @@ export class Album {
 }
 
 export class AlbumFull extends Album {
-	_count: { likes: number; tracks: number };
+	_count: { tracks: number };
+	likes: AddedAt[];
+}
+
+class AddedAt {
+	@ApiDate()
+	addedAt: string;
 }

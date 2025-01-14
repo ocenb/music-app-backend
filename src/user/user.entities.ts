@@ -11,7 +11,10 @@ export class UserPublic extends UserWithoutFollowingCount {
 	_count: { followers: number; following: number };
 }
 
-export class UserPrivate extends UserWithoutFollowingCount {
+export class UserPrivate {
+	id: number;
+	username: string;
+	image: string;
 	email: string;
 	@ApiDate()
 	createdAt: string;
