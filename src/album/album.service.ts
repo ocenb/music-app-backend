@@ -14,7 +14,7 @@ import { AlbumTrackService } from './album-track/album-track.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { AlbumFull } from './album.entities';
+import { SearchService } from 'src/search/search.service';
 
 @Injectable()
 export class AlbumService {
@@ -26,41 +26,11 @@ export class AlbumService {
 		@Inject(forwardRef(() => AlbumTrackService))
 		private readonly albumTrackService: AlbumTrackService,
 		private readonly notificationService: NotificationService,
-		@Inject(CACHE_MANAGER) private cacheManager: Cache
+		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+		private readonly searchService: SearchService
 	) {}
 
-	async getOne(username: string, changeableId: string) {
-		const album = await this.prismaService.album.findUnique({
-			where: { username_changeableId: { changeableId, username } }
-		});
-
-		if (!album) {
-			throw new NotFoundException('Album not found');
-		}
-
-		const _count = await this.cacheManager.get<string>(`album:${album.id}`);
-
-		if (!_count) {
-			const album2 = await this.prismaService.album.findUnique({
-				where: { id: album.id },
-				select: { _count: { select: { likes: true, tracks: true } } }
-			});
-
-			await this.cacheManager.set(
-				`album:${album.id}`,
-				JSON.stringify({
-					likes: album2._count.likes,
-					tracks: album2._count.tracks
-				})
-			);
-
-			return { ...album, _count: album2._count };
-		}
-
-		return { ...album, _count: JSON.parse(_count) };
-	}
-
-	async getOneById(albumId: number) {
+	async getById(albumId: number) {
 		const album = await this.prismaService.album.findUnique({
 			where: { id: albumId }
 		});
@@ -72,9 +42,46 @@ export class AlbumService {
 		return album;
 	}
 
-	async getMany(userId: number, take = 50, lastId?: number) {
+	async getOne(currentUserId: number, username: string, changeableId: string) {
+		const album = await this.prismaService.album.findUnique({
+			where: { username_changeableId: { changeableId, username } },
+			include: {
+				likes: {
+					where: { userId: currentUserId },
+					select: { addedAt: true }
+				}
+			}
+		});
+
+		if (!album) {
+			throw new NotFoundException('Album not found');
+		}
+
+		const _count = await this.cacheManager.get<string>(`album:${album.id}`);
+
+		if (!_count) {
+			const album2 = await this.prismaService.album.findUnique({
+				where: { id: album.id },
+				select: { _count: { select: { tracks: true } } }
+			});
+
+			await this.cacheManager.set(
+				`album:${album.id}`,
+				JSON.stringify({
+					tracks: album2._count.tracks
+				})
+			);
+
+			return { ...album, _count: album2._count };
+		}
+
+		return { ...album, _count: JSON.parse(_count) };
+	}
+
+	async getMany(userId: number, take?: number, lastId?: number) {
 		return await this.prismaService.album.findMany({
 			where: { userId, id: { lt: lastId } },
+			orderBy: { createdAt: 'desc' },
 			take
 		});
 	}
@@ -101,7 +108,7 @@ export class AlbumService {
 		const imageFile = await this.fileService.saveImage(image);
 		await this.trackService.changeImages(trackIds, imageFile.filename);
 
-		let createManyData: { position: number; trackId: number }[] = [];
+		const createManyData: { position: number; trackId: number }[] = [];
 
 		for (let i = 0; i < trackIds.length; i++) {
 			createManyData.push({
@@ -123,8 +130,14 @@ export class AlbumService {
 
 		await this.cacheManager.set(
 			`album:${album.id}`,
-			JSON.stringify({ likes: 0, tracks: createManyData.length })
+			JSON.stringify({ tracks: createManyData.length })
 		);
+
+		await this.searchService.create({
+			id: album.id,
+			name: album.title,
+			type: 'album'
+		});
 
 		this.notificationService.create(
 			userId,
@@ -133,7 +146,7 @@ export class AlbumService {
 			'album'
 		);
 
-		return { ...album, _count: { likes: 0, tracks: createManyData.length } };
+		return { ...album, _count: { tracks: createManyData.length } };
 	}
 
 	async update(
@@ -163,10 +176,18 @@ export class AlbumService {
 			await this.fileService.deleteFileByName(album.image, 'images');
 		}
 
-		return await this.prismaService.album.update({
+		const updatedAlbum = await this.prismaService.album.update({
 			data: { image: imageName, ...updateAlbumDto },
 			where: { id: albumId }
 		});
+
+		if (updateAlbumDto.title) {
+			await this.searchService.update(`album_${updatedAlbum.id}`, {
+				name: updatedAlbum.title
+			});
+		}
+
+		return updatedAlbum;
 	}
 
 	async delete(userId: number, albumId: number) {
@@ -183,6 +204,8 @@ export class AlbumService {
 		});
 
 		await this.cacheManager.del(`album:${album.id}`);
+
+		await this.searchService.delete(`album_${album.id}`);
 	}
 
 	async deleteAllUserAlbums(userId: number) {
@@ -190,10 +213,14 @@ export class AlbumService {
 			where: { userId }
 		});
 
-		let keys: string[] = [];
+		const keys: string[] = [];
 
-		albums.map((album) => {
+		albums.map(async (album) => {
 			keys.push(`album:${album.id}`);
+			const tracksIds = await this.albumTrackService.getAllTracksIds(album.id);
+
+			await this.trackService.deleteMany(tracksIds);
+			await this.fileService.deleteFileByName(album.image, 'images');
 		});
 
 		await this.prismaService.album.deleteMany({ where: { userId } });

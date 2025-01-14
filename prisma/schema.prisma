@@ -8,24 +8,27 @@ datasource db {
 }
 
 model User {
-    id               Int                 @id @default(autoincrement())
-    username         String              @unique
-    email            String              @unique
-    password         String
-    image            String              @default("default")
-    tokens           Token[]
-    tracks           Track[]
-    playlists        Playlist[]
-    albums           Album[]
-    notifications    UserNotification[]
-    followers        UserFollower[]      @relation(name: "user_followers")
-    following        UserFollower[]      @relation(name: "user_following")
-    likedTracks      UserLikedTrack[]
-    likedAlbums      UserLikedAlbum[]
-    savedPlaylists   UserSavedPlaylist[]
-    listeningHistory ListeningHistory[]
-    createdAt        DateTime            @default(now()) @map("created_at")
-    updatedAt        DateTime            @updatedAt @map("updated_at")
+    id                         Int                 @id @default(autoincrement())
+    username                   String              @unique
+    email                      String              @unique
+    password                   String
+    image                      String              @default("default")
+    isVerified                 Boolean             @default(false)
+    verificationToken          String?             @unique @map("verification_token")
+    verificationTokenExpiresAt DateTime?           @map("verification_token_expires_at")
+    tokens                     Token[]
+    tracks                     Track[]
+    playlists                  Playlist[]
+    albums                     Album[]
+    notifications              UserNotification[]
+    followers                  UserFollower[]      @relation(name: "user_followers")
+    following                  UserFollower[]      @relation(name: "user_following")
+    likedTracks                UserLikedTrack[]
+    likedAlbums                UserLikedAlbum[]
+    savedPlaylists             UserSavedPlaylist[]
+    listeningHistory           ListeningHistory[]
+    createdAt                  DateTime            @default(now()) @map("created_at")
+    updatedAt                  DateTime            @updatedAt @map("updated_at")
 
     @@unique([id, username])
     @@map("user")
@@ -64,6 +67,7 @@ model Track {
     @@unique([username, title])
     @@unique([userId, changeableId])
     @@unique([userId, title])
+    @@index([userId])
     @@map("track")
 }
 
@@ -85,6 +89,7 @@ model Album {
     @@unique([username, title])
     @@unique([userId, changeableId])
     @@unique([userId, title])
+    @@index([userId])
     @@map("album")
 }
 
@@ -105,6 +110,7 @@ model Playlist {
     @@unique([username, title])
     @@unique([userId, changeableId])
     @@unique([userId, title])
+    @@index([userId])
     @@map("playlist")
 }
 
@@ -114,6 +120,8 @@ model Notification {
     link      String
     users     UserNotification[]
     createdAt DateTime           @default(now()) @map("created_at")
+
+    @@map("notification")
 }
 
 model UserNotification {

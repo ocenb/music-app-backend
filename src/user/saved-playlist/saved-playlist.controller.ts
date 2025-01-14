@@ -26,9 +26,10 @@ export class SavedPlaylistController {
 	@ApiResponse({ status: 200, type: [SavedPlaylist] })
 	async getMany(
 		@User('id') userId: number,
-		@Query('take', ParseIntOptionalPipe) take?: number
+		@Query('take', ParseIntOptionalPipe) take?: number,
+		@Query('lastId', ParseIntOptionalPipe) lastId?: number
 	) {
-		return await this.savedPlaylistService.getMany(userId, take);
+		return await this.savedPlaylistService.getMany(userId, take, lastId);
 	}
 
 	@Post(':playlistId')

@@ -12,6 +12,9 @@ import { FileService } from 'src/file/file.service';
 import { PlaylistTrackService } from 'src/playlist/playlist-track/playlist-track.service';
 import { AlbumTrackService } from 'src/album/album-track/album-track.service';
 import { NotificationService } from 'src/notification/notification.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { SearchService } from 'src/search/search.service';
 
 @Injectable()
 export class TrackService {
@@ -21,7 +24,9 @@ export class TrackService {
 		@Inject(forwardRef(() => PlaylistTrackService))
 		private readonly playlistTrackService: PlaylistTrackService,
 		private readonly albumTrackService: AlbumTrackService,
-		private readonly notificationService: NotificationService
+		private readonly notificationService: NotificationService,
+		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+		private readonly searchService: SearchService
 	) {}
 
 	async streamAudio(trackId: number) {
@@ -32,9 +37,18 @@ export class TrackService {
 		return { streamableFile, fileName: track.audio, size };
 	}
 
-	async getOne(trackId: number, currentUserId: number) {
+	async getOneById(currentUserId: number, trackId: number) {
 		return await this.prismaService.track.findUnique({
 			where: { id: trackId },
+			include: {
+				likes: { where: { userId: currentUserId }, select: { addedAt: true } }
+			}
+		});
+	}
+
+	async getOne(currentUserId: number, username: string, changeableId: string) {
+		return await this.prismaService.track.findUnique({
+			where: { username_changeableId: { changeableId, username } },
 			include: {
 				likes: { where: { userId: currentUserId }, select: { addedAt: true } }
 			}
@@ -44,7 +58,7 @@ export class TrackService {
 	async getMany(
 		currentUserId: number,
 		userId: number,
-		take = 50,
+		take?: number,
 		lastId?: number
 	) {
 		return await this.prismaService.track.findMany({
@@ -60,7 +74,7 @@ export class TrackService {
 	async getManyPopular(
 		currentUserId: number,
 		userId: number,
-		take = 50,
+		take?: number,
 		lastId?: number
 	) {
 		const cursor = lastId ? { id: lastId } : undefined;
@@ -82,12 +96,12 @@ export class TrackService {
 		const prevTracks = await this.prismaService.track.findMany({
 			where: { userId, id: { gt: trackIdToExclude } },
 			select: { id: true },
-			orderBy: { createdAt: 'desc' }
+			orderBy: [{ createdAt: 'desc' }, { id: 'desc' }]
 		});
 		const nextTracks = await this.prismaService.track.findMany({
 			where: { userId, id: { lt: trackIdToExclude } },
 			select: { id: true },
-			orderBy: { createdAt: 'desc' }
+			orderBy: [{ createdAt: 'desc' }, { id: 'desc' }]
 		});
 
 		const prevIds: number[] = [];
@@ -146,6 +160,12 @@ export class TrackService {
 			}
 		});
 
+		await this.searchService.create({
+			id: newTrack.id,
+			name: newTrack.title,
+			type: 'track'
+		});
+
 		this.notificationService.create(userId, username, uploadTrackDto, 'track');
 
 		return newTrack;
@@ -199,16 +219,15 @@ export class TrackService {
 			data
 		});
 
-		let tracksChangeableIds = [];
-		uploadTracksDto.map((track) => {
-			tracksChangeableIds.push(track.changeableId);
-		});
+		const tracksChangeableIds = uploadTracksDto.map(
+			(track) => track.changeableId
+		);
 
 		const tracksIdsObjects = await this.prismaService.track.findMany({
-			where: { changeableId: { in: tracksChangeableIds } },
+			where: { changeableId: { in: tracksChangeableIds }, userId },
 			select: { id: true }
 		});
-		let tracksIds: number[] = [];
+		const tracksIds: number[] = [];
 		tracksIdsObjects.map((obj) => {
 			tracksIds.push(obj.id);
 		});
@@ -263,10 +282,18 @@ export class TrackService {
 			imageName = imageFile.filename;
 		}
 
-		return await this.prismaService.track.update({
+		const updatedTrack = await this.prismaService.track.update({
 			data: { image: imageName, ...updateTrackDto },
 			where: { id: trackId }
 		});
+
+		if (updateTrackDto.title) {
+			await this.searchService.update(`track_${updatedTrack.id}`, {
+				name: updatedTrack.title
+			});
+		}
+
+		return updatedTrack;
 	}
 
 	async delete(userId: number, trackId: number) {
@@ -287,14 +314,51 @@ export class TrackService {
 		);
 
 		await this.fileService.deleteFileByName(track.audio, 'audio');
-		await this.fileService.deleteFileByName(track.image, 'images');
+		if (!track.albums.length) {
+			await this.fileService.deleteFileByName(track.image, 'images');
+		}
 
 		await this.prismaService.track.delete({
 			where: { id: trackId }
 		});
 
+		await this.searchService.delete(`track_${track.id}`);
+
 		await this.playlistTrackService.moveTracksPositions(track.playlists);
 		await this.albumTrackService.moveTracksPositions(track.albums);
+
+		if (track.albums.length) {
+			for (const album of track.albums) {
+				const _count = await this.cacheManager.get<string>(
+					`album:${album.albumId}`
+				);
+
+				if (!_count) {
+					const album2 = await this.prismaService.album.findUnique({
+						where: { id: album.albumId },
+						select: { _count: { select: { likes: true, tracks: true } } }
+					});
+
+					await this.cacheManager.set(
+						`album:${album.albumId}`,
+						JSON.stringify({
+							likes: album2._count.likes,
+							tracks: album2._count.tracks
+						})
+					);
+				} else {
+					const parsedCount = JSON.parse(_count);
+
+					await this.cacheManager.set(
+						`album:${album.albumId}`,
+						JSON.stringify({
+							likes: parsedCount.likes,
+							tracks: parsedCount.tracks - 1
+						})
+					);
+				}
+			}
+		}
 	}
 
 	async deleteMany(tracksIds: number[]) {
@@ -321,6 +385,15 @@ export class TrackService {
 	}
 
 	async deleteAllUserTracks(userId: number) {
+		const tracks = await this.prismaService.track.findMany({
+			where: { userId }
+		});
+
+		tracks.map(async (track) => {
+			await this.fileService.deleteFileByName(track.image, 'images');
+			await this.fileService.deleteFileByName(track.audio, 'audio');
+		});
+
 		await this.prismaService.track.deleteMany({ where: { userId } });
 	}
 

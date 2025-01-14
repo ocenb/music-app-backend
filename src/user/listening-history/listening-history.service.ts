@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { Interval } from '@nestjs/schedule';
 import { PrismaService } from 'src/prisma.service';
 import { TrackService } from 'src/track/track.service';
 
 @Injectable()
 export class ListeningHistoryService {
+	private readonly logger = new Logger(ListeningHistoryService.name);
+
 	constructor(
 		private readonly prismaService: PrismaService,
 		private readonly trackService: TrackService
@@ -49,5 +52,19 @@ export class ListeningHistoryService {
 		await this.prismaService.listeningHistory.deleteMany({
 			where: { userId }
 		});
+	}
+
+	@Interval(2147483647)
+	async cleanUpHistory() {
+		this.logger.log('Deleting old history...');
+
+		const thirtyDaysAgo = new Date();
+		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+		const result = await this.prismaService.notification.deleteMany({
+			where: { createdAt: { lt: thirtyDaysAgo } }
+		});
+
+		this.logger.log(`Deleted ${result.count} old history`);
 	}
 }

@@ -13,6 +13,17 @@ export class Playlist {
 	updatedAt: string;
 }
 
+export class PlaylistWithIsSaved extends Playlist {
+	isSaved: boolean;
+	addedAt?: Date | null;
+}
+
 export class PlaylistFull extends Playlist {
-	_count: { savedByUsers: number; tracks: number };
+	_count: { tracks: number };
+	savedByUsers: AddedAt[];
+}
+
+class AddedAt {
+	@ApiDate()
+	addedAt: string;
 }

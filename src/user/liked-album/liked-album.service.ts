@@ -14,7 +14,7 @@ export class LikedAlbumService {
 	constructor(
 		private readonly prismaService: PrismaService,
 		private readonly albumService: AlbumService,
-		@Inject(CACHE_MANAGER) private cacheManager: Cache
+		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache
 	) {}
 
 	async getMany(userId: number, take?: number) {

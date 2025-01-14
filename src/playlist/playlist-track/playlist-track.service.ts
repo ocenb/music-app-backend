@@ -1,5 +1,4 @@
 import {
-	BadRequestException,
 	ConflictException,
 	forwardRef,
 	Inject,
@@ -20,13 +19,17 @@ export class PlaylistTrackService {
 		private readonly playlistService: PlaylistService
 	) {}
 
-	async getMany(playlistId: number, take?: number) {
+	async getMany(currentUserId: number, playlistId: number, take?: number) {
 		const { tracks } = await this.prismaService.playlist.findUnique({
 			where: { id: playlistId },
 			select: {
 				tracks: {
 					orderBy: { position: 'asc' },
-					select: { track: true, position: true, addedAt: true },
+					select: {
+						track: { include: { likes: { where: { userId: currentUserId } } } },
+						position: true,
+						addedAt: true
+					},
 					take
 				}
 			}

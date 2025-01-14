@@ -15,7 +15,7 @@ async function bootstrap() {
 	const url = configService.getOrThrow<string>('URL');
 
 	app.setGlobalPrefix('api');
-	app.use(helmet());
+	app.use(helmet({ crossOriginResourcePolicy: { policy: 'same-site' } }));
 	app.useGlobalPipes(
 		new ValidationPipe({
 			forbidNonWhitelisted: true,

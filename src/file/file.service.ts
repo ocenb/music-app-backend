@@ -16,7 +16,7 @@ type FileCategory = 'audio' | 'images';
 @Injectable()
 export class FileService {
 	constructor(private readonly configService: ConfigService) {
-		ffmpeg.setFfprobePath(configService.getOrThrow<string>('FFPROBE_PATH')); //
+		ffmpeg.setFfprobePath(configService.getOrThrow<string>('FFPROBE_PATH'));
 	}
 
 	streamAudio(fileName: string) {
@@ -46,21 +46,22 @@ export class FileService {
 			'audio'
 		);
 		const uuid = uuidv4();
-		const fileName = uuid + fileFormat;
-		const filePath = join(fileDestination, fileName);
+		const tempFileName = `${uuid}_temp${fileFormat}`;
+		const tempFilePath = join(fileDestination, tempFileName);
 
-		const outputFileName = uuid + '.webm';
+		const outputFileName = `${uuid}.webm`;
 		const outputFilePath = join(fileDestination, outputFileName);
 
-		await this.writeFile(filePath, file.buffer);
+		await this.writeFile(tempFilePath, file.buffer);
 
 		if (fileFormat !== '.webm') {
 			return new Promise((resolve, reject) => {
-				ffmpeg(filePath)
+				ffmpeg(tempFilePath)
 					.toFormat('webm')
 					.audioCodec('libvorbis')
+					.audioFilters('dynaudnorm')
 					.on('end', () => {
-						this.deleteFileByPath(filePath);
+						this.deleteFileByPath(tempFilePath);
 
 						file.filename = outputFileName;
 						file.path = outputFilePath;
@@ -68,7 +69,7 @@ export class FileService {
 						resolve(file);
 					})
 					.on('error', () => {
-						this.deleteFileByPath(filePath);
+						this.deleteFileByPath(tempFilePath);
 
 						reject(
 							new InternalServerErrorException('Error while converting file')
@@ -77,10 +78,28 @@ export class FileService {
 					.save(outputFilePath);
 			});
 		} else {
-			file.filename = fileName;
-			file.path = filePath;
+			return new Promise((resolve, reject) => {
+				ffmpeg(tempFilePath)
+					.audioFilters('dynaudnorm')
+					.on('end', () => {
+						this.deleteFileByPath(tempFilePath);
 
-			return file;
+						file.filename = outputFileName;
+						file.path = outputFilePath;
+
+						resolve(file);
+					})
+					.on('error', () => {
+						this.deleteFileByPath(tempFilePath);
+
+						reject(
+							new InternalServerErrorException(
+								'Error during audio file normalization'
+							)
+						);
+					})
+					.save(outputFilePath);
+			});
 		}
 	}
 
@@ -116,6 +135,7 @@ export class FileService {
 
 		try {
 			await fs.rm(filePath);
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		} catch (err) {
 			throw new InternalServerErrorException('Error while deleting file');
 		}
@@ -157,6 +177,7 @@ export class FileService {
 	private async writeFile(filePath: string, fileBuffer: Buffer) {
 		try {
 			await fs.writeFile(filePath, fileBuffer);
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		} catch (err) {
 			throw new InternalServerErrorException('Error while writing file');
 		}
@@ -165,6 +186,7 @@ export class FileService {
 	private async checkIsFileExists(filePath: string): Promise<void> {
 		try {
 			await fs.access(filePath, fs.constants.F_OK);
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		} catch (err) {
 			throw new NotFoundException("File doesn't exists");
 		}

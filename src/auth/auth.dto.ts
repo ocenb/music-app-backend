@@ -1,4 +1,4 @@
-import { IsEmail, IsNotIn, IsString, Length, Matches } from 'class-validator';
+import { IsEmail, IsNotIn, IsString, Length } from 'class-validator';
 import { Password, Username } from 'src/decorators/validation.decorator';
 
 export const restrictedUsernames = [
@@ -26,6 +26,10 @@ export class RegisterDto extends LoginDto {
 	@Username()
 	@IsNotIn(restrictedUsernames)
 	username: string;
+}
+
+export class CreateUserDto extends RegisterDto {
+	verificationToken: string;
 }
 
 export class ChangeEmailDto {

@@ -13,6 +13,10 @@ import { AlbumModule } from './album/album.module';
 import { NotificationModule } from './notification/notification.module';
 import { CacheModule, CacheStore } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { MailModule } from './mail/mail.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
 	imports: [
@@ -34,17 +38,31 @@ import { redisStore } from 'cache-manager-redis-yet';
 
 				return {
 					store: store as unknown as CacheStore,
-					ttl: 0
+					ttl: 86400000
 				};
 			}
 		}),
+		ThrottlerModule.forRoot([
+			{
+				ttl: 60000,
+				limit: 500
+			}
+		]),
 		AlbumModule,
 		AuthModule,
 		FileModule,
 		PlaylistModule,
 		TrackModule,
 		UserModule,
-		NotificationModule
+		NotificationModule,
+		MailModule,
+		SearchModule
+	],
+	providers: [
+		{
+			provide: APP_GUARD,
+			useClass: ThrottlerGuard
+		}
 	]
 })
 export class AppModule implements NestModule {

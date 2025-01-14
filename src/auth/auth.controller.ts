@@ -4,6 +4,7 @@ import {
 	HttpCode,
 	Patch,
 	Post,
+	Query,
 	Req,
 	Res,
 	UnauthorizedException
@@ -22,8 +23,10 @@ import { User } from './decorators/user.decorator';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserPrivate } from 'src/user/user.entities';
 import { Auth } from './decorators/auth.decorator';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Auth')
+@Throttle({ default: { ttl: 30000, limit: 5 } })
 @Controller('auth')
 export class AuthController {
 	constructor(
@@ -34,15 +37,9 @@ export class AuthController {
 	@Post('register')
 	@ApiOperation({ summary: 'Register' })
 	@ApiResponse({ status: 201, type: UserPrivate })
-	async register(
-		@Body() registerDto: RegisterDto,
-		@Res({ passthrough: true }) res: Response
-	) {
-		const { accessToken, refreshToken, user } =
-			await this.authService.register(registerDto);
-		this.authService.addTokensToResponse(res, accessToken, refreshToken);
-
-		return user;
+	async register(@Body() registerDto: RegisterDto) {
+		return 'Registration is disabled now';
+		return await this.authService.register(registerDto);
 	}
 
 	@Post('login')
@@ -110,6 +107,28 @@ export class AuthController {
 
 			throw err;
 		}
+	}
+
+	@Post('verify')
+	@ApiOperation({ summary: 'Verify registration' })
+	@ApiResponse({ status: 201, type: UserPrivate })
+	async verify(
+		@Query('token') token: string,
+		@Res({ passthrough: true }) res: Response
+	) {
+		const { refreshToken, accessToken, user } =
+			await this.authService.verify(token);
+		this.authService.addTokensToResponse(res, accessToken, refreshToken);
+
+		return user;
+	}
+
+	@Post('new-verification')
+	@Throttle({ default: { ttl: 300000, limit: 1 } })
+	@ApiOperation({ summary: 'Creates and sends new verification link' })
+	@ApiResponse({ status: 201, type: UserPrivate })
+	async newVerification(@Body() newVerificationDto: LoginDto) {
+		return await this.authService.newVerification(newVerificationDto);
 	}
 
 	@Patch('email')

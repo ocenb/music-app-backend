@@ -15,6 +15,7 @@ import { UserService } from 'src/user/user.service';
 import { TokenService } from './token/token.service';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +27,8 @@ export class AuthService {
 	constructor(
 		private readonly tokenService: TokenService,
 		private readonly userService: UserService,
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly mailService: MailService
 	) {}
 
 	async register(registerDto: RegisterDto) {
@@ -43,15 +45,20 @@ export class AuthService {
 		}
 
 		const hashedPassword = await hash(registerDto.password, 5);
+		const verificationToken = this.tokenService.generateVerificationToken();
 
 		const user = await this.userService.create({
 			...registerDto,
-			password: hashedPassword
+			password: hashedPassword,
+			verificationToken
 		});
 
-		const tokens = await this.tokenService.createTokens(user.id);
+		await this.mailService.sendVerificationMail(
+			registerDto.email,
+			verificationToken
+		);
 
-		return { user, ...tokens };
+		return user;
 	}
 
 	async login(loginDto: LoginDto) {
@@ -59,11 +66,24 @@ export class AuthService {
 		if (!userByEmail) {
 			throw new NotFoundException('User with this email does not exist');
 		}
-		const { password, ...user } = userByEmail;
+
+		const {
+			password,
+			isVerified,
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			verificationToken,
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			verificationTokenExpiresAt,
+			...user
+		} = userByEmail;
 
 		const isPassCorrect = await compare(loginDto.password, password);
 		if (!isPassCorrect) {
 			throw new UnauthorizedException('Wrong password');
+		}
+
+		if (!isVerified) {
+			throw new BadRequestException('User is not verified');
 		}
 
 		const tokens = await this.tokenService.createTokens(user.id);
@@ -87,6 +107,59 @@ export class AuthService {
 		const tokens = await this.tokenService.createTokens(user.id);
 
 		return { user, ...tokens };
+	}
+
+	async verify(verificationToken: string) {
+		const userByToken = await this.userService.getByToken(verificationToken);
+
+		if (!userByToken) {
+			throw new NotFoundException('Token not found');
+		}
+
+		if (userByToken.verificationTokenExpiresAt < new Date()) {
+			throw new BadRequestException('Token expired');
+		}
+
+		const verifiedUser = await this.userService.setVerified(userByToken.id);
+
+		const tokens = await this.tokenService.createTokens(userByToken.id);
+
+		return { user: verifiedUser, ...tokens };
+	}
+
+	async newVerification(newVerificationDto: LoginDto) {
+		const userByEmail = await this.userService.getByEmail(
+			newVerificationDto.email
+		);
+		if (!userByEmail) {
+			throw new NotFoundException('User with this email does not exist');
+		}
+
+		const isPassCorrect = await compare(
+			newVerificationDto.password,
+			userByEmail.password
+		);
+		if (!isPassCorrect) {
+			throw new UnauthorizedException('Wrong password');
+		}
+
+		if (userByEmail.isVerified) {
+			throw new BadRequestException('User is already verified');
+		}
+
+		const newVerificationToken = this.tokenService.generateVerificationToken();
+
+		const user = await this.userService.updateVerificationToken(
+			userByEmail.id,
+			newVerificationToken
+		);
+
+		await this.mailService.sendVerificationMail(
+			userByEmail.email,
+			newVerificationToken
+		);
+
+		return user;
 	}
 
 	async changeEmail(userId: number, changeEmailDto: ChangeEmailDto) {
@@ -131,7 +204,7 @@ export class AuthService {
 	) {
 		const accessTokenExpiresAt = new Date();
 		const refreshTokenExpiresAt = new Date();
-		accessTokenExpiresAt.setDate(accessTokenExpiresAt.getDate() + 30); // change to setMinutes and getMinutes
+		accessTokenExpiresAt.setMinutes(accessTokenExpiresAt.getMinutes() + 30);
 		refreshTokenExpiresAt.setDate(refreshTokenExpiresAt.getDate() + 30);
 
 		res.cookie(this.accessTokenName, accessToken, {

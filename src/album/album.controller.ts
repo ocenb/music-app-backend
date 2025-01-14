@@ -39,7 +39,6 @@ import {
 import { Album, AlbumFull } from './album.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { ParseTakePipe } from 'src/pipes/parse-take.pipe';
 
 @ApiTags('Album')
 @Auth()
@@ -51,10 +50,15 @@ export class AlbumController {
 	@ApiOperation({ summary: 'Gets one album' })
 	@ApiResponse({ status: 200, type: AlbumFull })
 	async getOne(
+		@User('id') currentUserId: number,
 		@Query('username') username: string,
 		@Query('changeableId') changeableId: string
 	) {
-		return await this.albumService.getOne(username, changeableId);
+		return await this.albumService.getOne(
+			currentUserId,
+			username,
+			changeableId
+		);
 	}
 
 	@Get('many')
@@ -62,7 +66,7 @@ export class AlbumController {
 	@ApiResponse({ status: 200, type: [Album] })
 	async getMany(
 		@Query('userId', ParseIntPipe) userId: number,
-		@Query('take', ParseTakePipe) take?: number,
+		@Query('take', ParseIntOptionalPipe) take?: number,
 		@Query('lastId', ParseIntOptionalPipe) lastId?: number
 	) {
 		return await this.albumService.getMany(userId, take, lastId);

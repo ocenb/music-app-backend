@@ -10,7 +10,6 @@ import {
 	Post,
 	Query,
 	Res,
-	StreamableFile,
 	UploadedFile,
 	UploadedFiles,
 	UseInterceptors
@@ -43,7 +42,6 @@ import { Track, TrackWithLiked } from './track.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Response } from 'express';
-import { ParseTakePipe } from 'src/pipes/parse-take.pipe';
 
 @ApiTags('Track')
 @Auth()
@@ -74,7 +72,20 @@ export class TrackController {
 		return streamableFile;
 	}
 
-	@Get('one/:trackId')
+	@Get('oneById/:trackId')
+	@ApiOperation({ summary: 'Gets one track' })
+	@ApiResponse({
+		status: 200,
+		type: TrackWithLiked
+	})
+	async getOneById(
+		@User('id') currentUserId: number,
+		@Param('trackId', ParseIntPipe) trackId: number
+	) {
+		return await this.trackService.getOneById(currentUserId, trackId);
+	}
+
+	@Get('one')
 	@ApiOperation({ summary: 'Gets one track' })
 	@ApiResponse({
 		status: 200,
@@ -82,9 +93,14 @@ export class TrackController {
 	})
 	async getOne(
 		@User('id') currentUserId: number,
-		@Param('trackId') trackId: number
+		@Query('username') username: string,
+		@Query('changeableId') changeableId: string
 	) {
-		return await this.trackService.getOne(trackId, currentUserId);
+		return await this.trackService.getOne(
+			currentUserId,
+			username,
+			changeableId
+		);
 	}
 
 	@Get()
@@ -96,7 +112,7 @@ export class TrackController {
 	async getMany(
 		@User('id') currentUserId: number,
 		@Query('userId', ParseIntPipe) userId: number,
-		@Query('take', ParseTakePipe) take?: number,
+		@Query('take', ParseIntOptionalPipe) take?: number,
 		@Query('lastId', ParseIntOptionalPipe) lastId?: number
 	) {
 		return await this.trackService.getMany(currentUserId, userId, take, lastId);
@@ -111,7 +127,7 @@ export class TrackController {
 	async getManyPopular(
 		@User('id') currentUserId: number,
 		@Query('userId', ParseIntPipe) userId: number,
-		@Query('take', ParseTakePipe) take?: number,
+		@Query('take', ParseIntOptionalPipe) take?: number,
 		@Query('lastId', ParseIntOptionalPipe) lastId?: number
 	) {
 		return await this.trackService.getManyPopular(
