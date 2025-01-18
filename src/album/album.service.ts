@@ -15,6 +15,7 @@ import { NotificationService } from 'src/notification/notification.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SearchService } from 'src/search/search.service';
+import { Express } from 'express';
 
 @Injectable()
 export class AlbumService {
@@ -105,8 +106,8 @@ export class AlbumService {
 			audios
 		);
 
-		const imageFile = await this.fileService.saveImage(image);
-		await this.trackService.changeImages(trackIds, imageFile.filename);
+		const imageName = await this.fileService.saveImage(image);
+		await this.trackService.changeImages(trackIds, imageName);
 
 		const createManyData: { position: number; trackId: number }[] = [];
 
@@ -123,7 +124,7 @@ export class AlbumService {
 				title,
 				type,
 				changeableId,
-				image: imageFile.filename,
+				image: imageName,
 				tracks: { createMany: { data: createManyData } }
 			}
 		});
@@ -167,12 +168,11 @@ export class AlbumService {
 		let imageName: string;
 
 		if (image) {
-			const imageFile = await this.fileService.saveImage(image);
-			imageName = imageFile.filename;
+			imageName = await this.fileService.saveImage(image);
 
 			const tracksIds = await this.albumTrackService.getAllTracksIds(albumId);
 
-			await this.trackService.changeImages(tracksIds, imageFile.filename);
+			await this.trackService.changeImages(tracksIds, imageName);
 			await this.fileService.deleteFileByName(album.image, 'images');
 		}
 

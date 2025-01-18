@@ -140,6 +140,7 @@ export class AuthController {
 		@Body() changeEmailDto: ChangeEmailDto,
 		@Res({ passthrough: true }) res: Response
 	) {
+		return 'Email change is disabled now';
 		const { accessToken, refreshToken, user } =
 			await this.authService.changeEmail(userId, changeEmailDto);
 		this.authService.addTokensToResponse(res, accessToken, refreshToken);

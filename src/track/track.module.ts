@@ -5,7 +5,7 @@ import { PrismaService } from 'src/prisma.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { FileModule } from 'src/file/file.module';
 import { PlaylistTrackModule } from 'src/playlist/playlist-track/playlist-track.module';
-import { multerConfig } from 'config/multer.config';
+import { multerConfig } from 'src/config/multer.config';
 import { AlbumTrackModule } from 'src/album/album-track/album-track.module';
 import { NotificationModule } from 'src/notification/notification.module';
 import { SearchModule } from 'src/search/search.module';

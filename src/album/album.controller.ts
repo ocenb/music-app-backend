@@ -39,6 +39,7 @@ import {
 import { Album, AlbumFull } from './album.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { Express } from 'express';
 
 @ApiTags('Album')
 @Auth()

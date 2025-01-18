@@ -7,7 +7,8 @@ export const restrictedUsernames = [
 	'logout',
 	'library',
 	'upload',
-	'settings'
+	'settings',
+	'api'
 ];
 
 export class LoginDto {

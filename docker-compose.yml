@@ -1,0 +1,58 @@
+networks:
+  app_network:
+    driver: bridge
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/custom.conf
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+  backend:
+    build: .
+    container_name: backend
+    ports:
+      - 5000:5000
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    restart: always
+    networks:
+      - app_network
+    depends_on:
+      - db
+      - redis
+
+  db:
+    container_name: postgres
+    image: postgres
+    env_file:
+      - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  redis:
+    container_name: cache
+    image: redis
+    volumes:
+      - redisdata:/data
+    networks:
+      - app_network
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local

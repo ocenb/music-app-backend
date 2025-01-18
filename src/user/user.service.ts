@@ -12,6 +12,7 @@ import { AlbumService } from 'src/album/album.service';
 import { TrackService } from 'src/track/track.service';
 import { PlaylistService } from 'src/playlist/playlist.service';
 import { SearchService } from 'src/search/search.service';
+import { Express } from 'express';
 
 @Injectable()
 export class UserService {
@@ -163,8 +164,7 @@ export class UserService {
 		let imageName: string;
 
 		if (image) {
-			const imageFile = await this.fileService.saveImage(image);
-			imageName = imageFile.filename;
+			imageName = await this.fileService.saveImage(image);
 			if (user.image !== 'default') {
 				await this.fileService.deleteFileByName(user.image, 'images');
 			}

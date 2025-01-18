@@ -1,15 +1,13 @@
-import {
-	Injectable,
-	InternalServerErrorException,
-	NotFoundException,
-	StreamableFile
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { extname, join } from 'path';
-import { createReadStream, statSync, promises as fs } from 'fs';
+import { promises as fs } from 'fs';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { v4 as uuidv4 } from 'uuid';
+import { v2 as cloudinary, UploadApiErrorResponse } from 'cloudinary';
 import * as sharp from 'sharp';
 import { ConfigService } from '@nestjs/config';
+import { UploadApiResponse } from 'cloudinary';
+import { Express } from 'express';
 
 type FileCategory = 'audio' | 'images';
 
@@ -19,37 +17,17 @@ export class FileService {
 		ffmpeg.setFfprobePath(configService.getOrThrow<string>('FFPROBE_PATH'));
 	}
 
-	streamAudio(fileName: string) {
-		const filePath = join(
-			__dirname,
-			'..',
-			'..',
-			'..',
-			'static',
-			'audio',
-			fileName
-		);
-		const file = createReadStream(filePath);
-		const size = statSync(filePath).size;
-
-		return { streamableFile: new StreamableFile(file), size };
-	}
-
-	async saveAudio(file: Express.Multer.File): Promise<Express.Multer.File> {
+	async saveAudio(
+		file: Express.Multer.File
+	): Promise<{ fileName: string; duration: number }> {
 		const fileFormat = extname(file.originalname).toLowerCase();
-		const fileDestination = join(
-			__dirname,
-			'..',
-			'..',
-			'..',
-			'static',
-			'audio'
-		);
-		const uuid = uuidv4();
-		const tempFileName = `${uuid}_temp${fileFormat}`;
+		const fileDestination = join(__dirname, '..', '..', 'temp');
+		const fileName = uuidv4();
+
+		const tempFileName = `${fileName}_temp${fileFormat}`;
 		const tempFilePath = join(fileDestination, tempFileName);
 
-		const outputFileName = `${uuid}.webm`;
+		const outputFileName = `${fileName}.webm`;
 		const outputFilePath = join(fileDestination, outputFileName);
 
 		await this.writeFile(tempFilePath, file.buffer);
@@ -60,16 +38,29 @@ export class FileService {
 					.toFormat('webm')
 					.audioCodec('libvorbis')
 					.audioFilters('dynaudnorm')
-					.on('end', () => {
-						this.deleteFileByPath(tempFilePath);
+					.on('end', async () => {
+						const duration = await this.getTrackDuration(outputFilePath);
 
-						file.filename = outputFileName;
-						file.path = outputFilePath;
+						try {
+							await this.uploadToCloudinary(outputFilePath, fileName, 'audio');
 
-						resolve(file);
+							this.deleteFileByPathIfExists(tempFilePath);
+							this.deleteFileByPathIfExists(outputFilePath);
+
+							resolve({ fileName, duration });
+						} catch {
+							this.deleteFileByPathIfExists(tempFilePath);
+							this.deleteFileByPathIfExists(outputFilePath);
+							reject(
+								new InternalServerErrorException(
+									'Error uploading to Cloudinary'
+								)
+							);
+						}
 					})
 					.on('error', () => {
-						this.deleteFileByPath(tempFilePath);
+						this.deleteFileByPathIfExists(tempFilePath);
+						this.deleteFileByPathIfExists(outputFilePath);
 
 						reject(
 							new InternalServerErrorException('Error while converting file')
@@ -81,16 +72,30 @@ export class FileService {
 			return new Promise((resolve, reject) => {
 				ffmpeg(tempFilePath)
 					.audioFilters('dynaudnorm')
-					.on('end', () => {
-						this.deleteFileByPath(tempFilePath);
+					.on('end', async () => {
+						const duration = await this.getTrackDuration(outputFilePath);
 
-						file.filename = outputFileName;
-						file.path = outputFilePath;
+						try {
+							await this.uploadToCloudinary(outputFilePath, fileName, 'audio');
 
-						resolve(file);
+							this.deleteFileByPathIfExists(tempFilePath);
+							this.deleteFileByPathIfExists(outputFilePath);
+
+							resolve({ fileName, duration });
+						} catch {
+							this.deleteFileByPathIfExists(tempFilePath);
+							this.deleteFileByPathIfExists(outputFilePath);
+
+							reject(
+								new InternalServerErrorException(
+									'Error uploading to Cloudinary'
+								)
+							);
+						}
 					})
 					.on('error', () => {
-						this.deleteFileByPath(tempFilePath);
+						this.deleteFileByPathIfExists(tempFilePath);
+						this.deleteFileByPathIfExists(outputFilePath);
 
 						reject(
 							new InternalServerErrorException(
@@ -105,17 +110,16 @@ export class FileService {
 
 	async saveImage(file: Express.Multer.File) {
 		const fileName = uuidv4();
-		const filePath = join(
+		const fileName250 = `${fileName}_250x250`;
+		const fileName50 = `${fileName}_50x50`;
+		const filePath250 = join(
 			__dirname,
 			'..',
 			'..',
-			'..',
-			'static',
-			'images',
-			fileName
+			'temp',
+			`${fileName250}.jpg`
 		);
-		const filePath250 = `${filePath}_250x250.jpg`;
-		const filePath50 = `${filePath}_50x50.jpg`;
+		const filePath50 = join(__dirname, '..', '..', 'temp', `${fileName50}.jpg`);
 
 		await sharp(file.buffer)
 			.resize(250, 250, { fit: 'cover', position: 'center' })
@@ -124,43 +128,71 @@ export class FileService {
 			.resize(50, 50, { fit: 'cover', position: 'center' })
 			.toFile(filePath50);
 
-		file.filename = fileName;
-		file.path = filePath;
+		await this.uploadToCloudinary(filePath250, fileName250, 'images');
+		await this.uploadToCloudinary(filePath50, fileName50, 'images');
 
-		return file;
-	}
+		this.deleteFileByPathIfExists(filePath250);
+		this.deleteFileByPathIfExists(filePath50);
 
-	async deleteFileByPath(filePath: string) {
-		await this.checkIsFileExists(filePath);
-
-		try {
-			await fs.rm(filePath);
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		} catch (err) {
-			throw new InternalServerErrorException('Error while deleting file');
-		}
+		return fileName;
 	}
 
 	async deleteFileByName(fileName: string, category: FileCategory) {
-		const filePath = join(
-			__dirname,
-			'..',
-			'..',
-			'..',
-			'static',
-			category,
-			fileName
-		);
-
 		if (category === 'images') {
-			await this.deleteFileByPath(`${filePath}_250x250.jpg`);
-			await this.deleteFileByPath(`${filePath}_50x50.jpg`);
+			await new Promise((resolve, reject) => {
+				cloudinary.uploader.destroy(
+					`images/${fileName}_250x250`,
+					{ resource_type: 'image' },
+					(error?: UploadApiErrorResponse, result?: UploadApiResponse) => {
+						if (error) return reject(error);
+						resolve(result);
+					}
+				);
+			});
+			await new Promise((resolve, reject) => {
+				cloudinary.uploader.destroy(
+					`images/${fileName}_50x50`,
+					{ resource_type: 'image' },
+					(error?: UploadApiErrorResponse, result?: UploadApiResponse) => {
+						if (error) return reject(error);
+						resolve(result);
+					}
+				);
+			});
 		} else {
-			await this.deleteFileByPath(filePath);
+			await new Promise((resolve, reject) => {
+				cloudinary.uploader.destroy(
+					`audio/${fileName}`,
+					{ resource_type: 'raw' },
+					(error?: UploadApiErrorResponse, result?: UploadApiResponse) => {
+						if (error) return reject(error);
+						resolve(result);
+					}
+				);
+			});
 		}
 	}
 
-	async getTrackDuration(audioPath: string): Promise<number> {
+	private async uploadToCloudinary(
+		filePath: string,
+		fileName: string,
+		category: FileCategory
+	): Promise<UploadApiResponse> {
+		const resource_type = category === 'audio' ? 'raw' : 'image';
+
+		return new Promise((resolve, reject) => {
+			cloudinary.uploader.upload(
+				filePath,
+				{ resource_type, public_id: fileName, folder: category },
+				(error?: UploadApiErrorResponse, result?: UploadApiResponse) => {
+					if (error) return reject(error);
+					resolve(result);
+				}
+			);
+		});
+	}
+
+	private async getTrackDuration(audioPath: string): Promise<number> {
 		return new Promise((resolve, reject) => {
 			ffmpeg.ffprobe(audioPath, (err, metadata) => {
 				if (err) {
@@ -174,21 +206,32 @@ export class FileService {
 		});
 	}
 
+	private async deleteFileByPathIfExists(filePath: string) {
+		const isFileExists = await this.checkIsFileExists(filePath);
+
+		if (isFileExists) {
+			try {
+				await fs.rm(filePath);
+			} catch {
+				throw new InternalServerErrorException('Error while deleting file');
+			}
+		}
+	}
+
 	private async writeFile(filePath: string, fileBuffer: Buffer) {
 		try {
 			await fs.writeFile(filePath, fileBuffer);
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		} catch (err) {
+		} catch {
 			throw new InternalServerErrorException('Error while writing file');
 		}
 	}
 
-	private async checkIsFileExists(filePath: string): Promise<void> {
+	private async checkIsFileExists(filePath: string): Promise<boolean> {
 		try {
 			await fs.access(filePath, fs.constants.F_OK);
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		} catch (err) {
-			throw new NotFoundException("File doesn't exists");
+			return true;
+		} catch {
+			return false;
 		}
 	}
 }
