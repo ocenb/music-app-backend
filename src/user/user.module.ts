@@ -7,7 +7,7 @@ import { SavedPlaylistModule } from './saved-playlist/saved-playlist.module';
 import { LikedTrackModule } from './liked-track/liked-track.module';
 import { FileModule } from 'src/file/file.module';
 import { MulterModule } from '@nestjs/platform-express';
-import { multerConfig } from 'config/multer.config';
+import { multerConfig } from 'src/config/multer.config';
 import { ListeningHistoryModule } from './listening-history/listening-history.module';
 import { AlbumModule } from 'src/album/album.module';
 import { TrackModule } from 'src/track/track.module';

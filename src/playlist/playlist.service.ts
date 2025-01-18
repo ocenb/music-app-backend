@@ -8,6 +8,7 @@ import { PrismaService } from 'src/prisma.service';
 import { CreatePlaylistDto, UpdatePlaylistDto } from './playlist.dto';
 import { FileService } from 'src/file/file.service';
 import { SavedPlaylistService } from 'src/user/saved-playlist/saved-playlist.service';
+import { Express } from 'express';
 
 @Injectable()
 export class PlaylistService {
@@ -91,12 +92,12 @@ export class PlaylistService {
 		await this.validatePlaylistTitle(userId, createPlaylistDto.title);
 		await this.validateChangeableId(userId, createPlaylistDto.changeableId);
 
-		const imageFile = await this.fileService.saveImage(image);
+		const imageName = await this.fileService.saveImage(image);
 
 		return await this.prismaService.playlist.create({
 			data: {
 				user: { connect: { id: userId } },
-				image: imageFile.filename,
+				image: imageName,
 				...createPlaylistDto
 			}
 		});
@@ -119,8 +120,7 @@ export class PlaylistService {
 		let imageName: string;
 
 		if (image) {
-			const imageFile = await this.fileService.saveImage(image);
-			imageName = imageFile.filename;
+			imageName = await this.fileService.saveImage(image);
 			await this.fileService.deleteFileByName(playlist.image, 'images');
 		}
 

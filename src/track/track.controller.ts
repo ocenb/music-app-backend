@@ -9,7 +9,6 @@ import {
 	Patch,
 	Post,
 	Query,
-	Res,
 	UploadedFile,
 	UploadedFiles,
 	UseInterceptors
@@ -41,36 +40,13 @@ import {
 import { Track, TrackWithLiked } from './track.entities';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { Response } from 'express';
+import { Express } from 'express';
 
 @ApiTags('Track')
 @Auth()
 @Controller('track')
 export class TrackController {
 	constructor(private readonly trackService: TrackService) {}
-
-	@Get('stream/:trackId')
-	@ApiOperation({ summary: 'Streams an audio file' })
-	@ApiResponse({
-		status: 200,
-		content: { 'audio/webm': { example: 'binary data' } }
-	})
-	async streamAudio(
-		@Res({ passthrough: true }) res: Response,
-		@Param('trackId') trackId: number
-	) {
-		const { streamableFile, fileName, size } =
-			await this.trackService.streamAudio(trackId);
-
-		res.set({
-			'Accept-Ranges': 'bytes',
-			'Content-Type': 'audio/webm',
-			'Content-Length': size,
-			'Content-Disposition': `inline; filename=${fileName}`
-		});
-
-		return streamableFile;
-	}
 
 	@Get('oneById/:trackId')
 	@ApiOperation({ summary: 'Gets one track' })

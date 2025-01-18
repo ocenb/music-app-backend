@@ -2,6 +2,7 @@ import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { extname } from 'path';
 import { UploadedFilesDto } from 'src/track/track.dto';
+import { Express } from 'express';
 
 const audioFormats = ['.mp3', '.aac', '.flac', '.wav', '.aiff', '.webm'];
 const imageFormats = ['.jpg', '.png'];

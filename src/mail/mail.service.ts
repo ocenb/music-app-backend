@@ -15,13 +15,7 @@ export class MailService {
 	}
 
 	async sendVerificationMail(to: string, verificationToken: string) {
-		console.log(
-			'Mail is disabled',
-			`${this.configService.getOrThrow<string>('URL')}/verify?token=${verificationToken}`
-		);
-		return;
-
-		const verificationLink = `${this.configService.getOrThrow<string>('URL')}/verify?token=${verificationToken}`;
+		const verificationLink = `${this.configService.getOrThrow<string>('DOMAIN')}/verify?token=${verificationToken}`;
 
 		await this.sendMail(
 			to,

@@ -11,8 +11,7 @@ async function bootstrap() {
 
 	const configService = app.get(ConfigService);
 	const port = configService.getOrThrow<string>('PORT');
-	const frontendPort = configService.getOrThrow<string>('FRONTEND_PORT');
-	const url = configService.getOrThrow<string>('URL');
+	const frontendUrl = configService.getOrThrow<string>('FRONTEND_URL');
 
 	app.setGlobalPrefix('api');
 	app.use(helmet({ crossOriginResourcePolicy: { policy: 'same-site' } }));
@@ -25,7 +24,7 @@ async function bootstrap() {
 	);
 	app.use(cookieParser());
 	app.enableCors({
-		origin: [`${url}:${frontendPort}`],
+		origin: [frontendUrl],
 		credentials: true,
 		exposedHeaders: 'set-cookie'
 	});
@@ -38,7 +37,7 @@ async function bootstrap() {
 	const document = SwaggerModule.createDocument(app, config);
 	SwaggerModule.setup('api/docs', app, document);
 
-	await app.listen(port, () => console.log(`${url}:${port}`));
+	await app.listen(port, () => console.log(`Port: ${port}`));
 }
 
 bootstrap();

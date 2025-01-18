@@ -17,7 +17,7 @@ import { TrackModule } from 'src/track/track.module';
 		ElasticsearchModule.registerAsync({
 			imports: [ConfigModule],
 			useFactory: async (configService: ConfigService) => ({
-				node: configService.get('ELASTICSEARCH_NODE')
+				node: configService.get('ELASTICSEARCH_URL')
 			}),
 			inject: [ConfigService]
 		})

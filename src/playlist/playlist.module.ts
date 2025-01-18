@@ -6,7 +6,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { FileModule } from 'src/file/file.module';
 import { PlaylistTrackModule } from './playlist-track/playlist-track.module';
 import { TrackModule } from 'src/track/track.module';
-import { multerConfig } from 'config/multer.config';
+import { multerConfig } from 'src/config/multer.config';
 import { SavedPlaylistModule } from 'src/user/saved-playlist/saved-playlist.module';
 
 @Module({

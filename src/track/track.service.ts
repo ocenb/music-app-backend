@@ -15,6 +15,7 @@ import { NotificationService } from 'src/notification/notification.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SearchService } from 'src/search/search.service';
+import { Express } from 'express';
 
 @Injectable()
 export class TrackService {
@@ -28,14 +29,6 @@ export class TrackService {
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
 		private readonly searchService: SearchService
 	) {}
-
-	async streamAudio(trackId: number) {
-		const track = await this.validateTrack(trackId);
-
-		const { streamableFile, size } = this.fileService.streamAudio(track.audio);
-
-		return { streamableFile, fileName: track.audio, size };
-	}
 
 	async getOneById(currentUserId: number, trackId: number) {
 		return await this.prismaService.track.findUnique({
@@ -136,17 +129,16 @@ export class TrackService {
 		await this.validateTrackTitle(userId, uploadTrackDto.title);
 		await this.validateChangeableId(userId, uploadTrackDto.changeableId);
 
-		const audioFile = await this.fileService.saveAudio(files.audio[0]);
+		const { fileName, duration } = await this.fileService.saveAudio(
+			files.audio[0]
+		);
 
-		let duration: number;
 		let imageName: string;
 
 		try {
-			duration = await this.fileService.getTrackDuration(audioFile.path);
-			const imageFile = await this.fileService.saveImage(files.image[0]);
-			imageName = imageFile.filename;
+			imageName = await this.fileService.saveImage(files.image[0]);
 		} catch (err) {
-			this.fileService.deleteFileByPath(audioFile.path);
+			this.fileService.deleteFileByName(fileName, 'audio');
 			throw err;
 		}
 
@@ -154,7 +146,7 @@ export class TrackService {
 			data: {
 				user: { connect: { id: userId } },
 				duration,
-				audio: audioFile.filename,
+				audio: fileName,
 				image: imageName,
 				...uploadTrackDto
 			}
@@ -193,16 +185,15 @@ export class TrackService {
 				await this.validateTrackTitle(userId, trackInfo.title);
 				await this.validateChangeableId(userId, trackInfo.changeableId);
 
-				const audioFile = await this.fileService.saveAudio(audios[i]);
-				const duration = await this.fileService.getTrackDuration(
-					audioFile.path
+				const { fileName, duration } = await this.fileService.saveAudio(
+					audios[i]
 				);
 
 				data.push({
 					userId,
 					username,
 					duration,
-					audio: audioFile.filename,
+					audio: fileName,
 					changeableId: trackInfo.changeableId,
 					title: trackInfo.title
 				});
@@ -277,9 +268,8 @@ export class TrackService {
 				);
 			}
 
-			const imageFile = await this.fileService.saveImage(image);
+			imageName = await this.fileService.saveImage(image);
 			await this.fileService.deleteFileByName(track.image, 'images');
-			imageName = imageFile.filename;
 		}
 
 		const updatedTrack = await this.prismaService.track.update({
