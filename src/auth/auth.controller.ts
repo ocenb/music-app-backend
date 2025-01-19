@@ -158,6 +158,7 @@ export class AuthController {
 		@Body() changePasswordDto: ChangePasswordDto,
 		@Res({ passthrough: true }) res: Response
 	) {
+		return 'Password change is disabled now';
 		const { accessToken, refreshToken, user } =
 			await this.authService.changePassword(
 				userId,

@@ -30,12 +30,14 @@ async function bootstrap() {
 	});
 
 	const config = new DocumentBuilder()
-		.setTitle('Music app')
+		.setTitle('musicapp.fun')
 		.setVersion('1.0')
-		.addCookieAuth()
 		.build();
 	const document = SwaggerModule.createDocument(app, config);
-	SwaggerModule.setup('api/docs', app, document);
+	SwaggerModule.setup('api/docs', app, document, {
+		jsonDocumentUrl: '/api/docs/json',
+		yamlDocumentUrl: '/api/docs/yaml'
+	});
 
 	await app.listen(port, () => console.log(`Port: ${port}`));
 }
