@@ -84,7 +84,7 @@ export class TrackService {
 	}
 
 	async getManyIds(userId: number, trackIdToExclude: number) {
-		this.validateTrack(trackIdToExclude);
+		await this.validateTrack(trackIdToExclude);
 
 		const prevTracks = await this.prismaService.track.findMany({
 			where: { userId, id: { gt: trackIdToExclude } },

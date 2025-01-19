@@ -20,7 +20,7 @@ export class PlaylistTrackService {
 	) {}
 
 	async getMany(currentUserId: number, playlistId: number, take?: number) {
-		const { tracks } = await this.prismaService.playlist.findUnique({
+		const playlist = await this.prismaService.playlist.findUnique({
 			where: { id: playlistId },
 			select: {
 				tracks: {
@@ -35,7 +35,11 @@ export class PlaylistTrackService {
 			}
 		});
 
-		return tracks;
+		if (!playlist) {
+			throw new NotFoundException('Playlist not found');
+		}
+
+		return playlist.tracks;
 	}
 
 	async getManyIds(playlistId: number, positionToExclude: number) {
@@ -61,14 +65,18 @@ export class PlaylistTrackService {
 		});
 
 		const prevIds: number[] = [];
-		prevTracks.tracks.map((obj) => {
-			prevIds.push(obj.track.id);
-		});
+		if (prevTracks) {
+			prevTracks.tracks.map((obj) => {
+				prevIds.push(obj.track.id);
+			});
+		}
 
 		const nextIds: number[] = [];
-		nextTracks.tracks.map((obj) => {
-			nextIds.push(obj.track.id);
-		});
+		if (nextTracks) {
+			nextTracks.tracks.map((obj) => {
+				nextIds.push(obj.track.id);
+			});
+		}
 
 		return { prevIds, nextIds };
 	}
