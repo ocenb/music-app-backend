@@ -16,6 +16,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SearchService } from 'src/search/search.service';
 import { Express } from 'express';
+import { CreateDocumentDto } from 'src/search/search.dto';
 
 @Injectable()
 export class TrackService {
@@ -216,12 +217,19 @@ export class TrackService {
 
 		const tracksIdsObjects = await this.prismaService.track.findMany({
 			where: { changeableId: { in: tracksChangeableIds }, userId },
-			select: { id: true }
+			select: { id: true, title: true }
 		});
+
+		const forSearch: CreateDocumentDto[] = [];
 		const tracksIds: number[] = [];
+
 		tracksIdsObjects.map((obj) => {
+			forSearch.push({ id: obj.id, name: obj.title, type: 'track' });
 			tracksIds.push(obj.id);
 		});
+
+		await this.searchService.createMany(forSearch);
+
 		tracksIds.sort((a, b) => a - b);
 
 		return tracksIds;

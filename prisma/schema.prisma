@@ -180,7 +180,7 @@ model UserSavedPlaylist {
 
 model AlbumTrack {
     album    Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
-    albumId  Int      @map("playlist_id")
+    albumId  Int      @map("album_id")
     track    Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
     trackId  Int      @map("track_id")
     position Int
