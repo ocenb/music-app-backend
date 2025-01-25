@@ -56,6 +56,13 @@ export class UserController {
 		return await this.userService.getByName(username);
 	}
 
+	@Get('recommended')
+	@ApiOperation({ summary: 'Gets recommended users' })
+	@ApiResponse({ status: 200, type: [UserPublic] })
+	async getRecommended() {
+		return await this.userService.getRecommended();
+	}
+
 	@Get()
 	@ApiOperation({ summary: 'Gets multiple users' })
 	@ApiResponse({ status: 200, type: [UserPublic] })

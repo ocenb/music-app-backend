@@ -40,7 +40,7 @@ export class UserService {
 		private readonly searchService: SearchService
 	) {}
 
-	async getByIdForSearch(id: number) {
+	async getByIdPublic(id: number) {
 		return await this.prismaService.user.findUnique({
 			where: { id },
 			select: this.selectPublic
@@ -127,6 +127,16 @@ export class UserService {
 			where: { id: { lt: lastId }, isVerified: true },
 			take
 		});
+	}
+
+	async getRecommended() {
+		const one = await this.getByIdPublic(5);
+		const two = await this.getByIdPublic(4);
+		const three = await this.getByIdPublic(6);
+		const four = await this.getByIdPublic(7);
+		const five = await this.getByIdPublic(2);
+
+		return [one, two, three, four, five];
 	}
 
 	async create(createUserDto: CreateUserDto) {

@@ -30,9 +30,7 @@ export class SearchService {
 		const documents = await Promise.all(
 			result.body.hits.hits.map(async (hit: any) => {
 				if (hit._source.type === 'user') {
-					const document = await this.userService.getByIdForSearch(
-						hit._source.id
-					);
+					const document = await this.userService.getByIdPublic(hit._source.id);
 					return {
 						type: 'user',
 						document
@@ -63,6 +61,18 @@ export class SearchService {
 			index: 'main',
 			id,
 			body: createDto
+		});
+	}
+
+	async createMany(createManyDto: CreateDocumentDto[]) {
+		const bulkBody = createManyDto.flatMap((createDto) => [
+			{ index: { _index: 'main', _id: `${createDto.type}_${createDto.id}` } },
+			createDto
+		]);
+
+		await this.elasticsearchService.bulk({
+			refresh: true,
+			body: bulkBody
 		});
 	}
 
