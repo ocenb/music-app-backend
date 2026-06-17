@@ -26,6 +26,7 @@ RUN npm install --omit=dev
 COPY --from=builder /app/prisma /app/prisma
 COPY --from=builder /app/temp /app/temp
 COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/prisma.config.ts /app/prisma.config.ts
 
 RUN npx prisma generate
 
