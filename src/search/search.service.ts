@@ -21,7 +21,12 @@ export class SearchService {
 		const result = await this.elasticsearchService.search({
 			index: 'main',
 			query: {
-				match: { name: searchQuery }
+				match: {
+					name: {
+						query: searchQuery,
+						fuzziness: 'AUTO'
+					}
+				}
 			}
 		});
 
