@@ -11,11 +11,7 @@ import {
 	UploadedFile,
 	UseInterceptors
 } from '@nestjs/common';
-import { UserService } from './user.service';
-import { User } from 'src/auth/decorators/user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ImageOptionalValidationPipe } from 'src/pipes/files-validation.pipe';
-import { User as UserModel } from '@prisma/client';
 import {
 	ApiBody,
 	ApiConsumes,
@@ -23,13 +19,16 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import { UpdateUserDto, UpdateUserDtoWithImage } from './user.dto';
+import { User as UserModel } from '@prisma/client';
+import { Express, Response } from 'express';
 import { AuthService } from 'src/auth/auth.service';
-import { Response } from 'express';
-import { UserPrivate, UserPublic } from './user.entities';
-import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { Express } from 'express';
+import { User } from 'src/auth/decorators/user.decorator';
+import { ImageOptionalValidationPipe } from 'src/pipes/files-validation.pipe';
+import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
+import { type UpdateUserDto, UpdateUserDtoWithImage } from './user.dto';
+import { UserPrivate, UserPublic } from './user.entities';
+import { UserService } from './user.service';
 
 @ApiTags('User')
 @Auth()

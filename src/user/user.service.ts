@@ -4,15 +4,15 @@ import {
 	NotFoundException
 } from '@nestjs/common';
 import { User as UserModel } from '@prisma/client';
+import { Express } from 'express';
+import { AlbumService } from 'src/album/album.service';
 import { CreateUserDto } from 'src/auth/auth.dto';
 import { FileService } from 'src/file/file.service';
-import { PrismaService } from 'src/prisma.service';
-import { UpdateUserDto } from './user.dto';
-import { AlbumService } from 'src/album/album.service';
-import { TrackService } from 'src/track/track.service';
 import { PlaylistService } from 'src/playlist/playlist.service';
+import { PrismaService } from 'src/prisma.service';
 import { SearchService } from 'src/search/search.service';
-import { Express } from 'express';
+import { TrackService } from 'src/track/track.service';
+import { UpdateUserDto } from './user.dto';
 
 @Injectable()
 export class UserService {

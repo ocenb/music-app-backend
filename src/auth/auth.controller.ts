@@ -9,21 +9,21 @@ import {
 	Res,
 	UnauthorizedException
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { ConfigService } from '@nestjs/config';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { Request, Response } from 'express';
+import { UserPrivate } from 'src/user/user.entities';
 import {
 	ChangeEmailDto,
 	ChangePasswordDto,
 	LoginDto,
 	RegisterDto
 } from './auth.dto';
-import { Request, Response } from 'express';
-import { ConfigService } from '@nestjs/config';
+import { AuthService } from './auth.service';
+import { Auth } from './decorators/auth.decorator';
 import { TokenId } from './decorators/token-id.decorator';
 import { User } from './decorators/user.decorator';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { UserPrivate } from 'src/user/user.entities';
-import { Auth } from './decorators/auth.decorator';
-import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Auth')
 @Throttle({ default: { ttl: 30000, limit: 5 } })
@@ -37,9 +37,9 @@ export class AuthController {
 	@Post('register')
 	@ApiOperation({ summary: 'Register' })
 	@ApiResponse({ status: 201, type: UserPrivate })
-	async register(@Body() registerDto: RegisterDto) {
+	async register(@Body() _registerDto: RegisterDto) {
 		return 'Registration is disabled now';
-		return await this.authService.register(registerDto);
+		// return await this.authService.register(registerDto);
 	}
 
 	@Post('login')
@@ -136,16 +136,18 @@ export class AuthController {
 	@ApiOperation({ summary: 'Changes email' })
 	@ApiResponse({ status: 200, type: UserPrivate })
 	async changeEmail(
-		@User('id') userId: number,
-		@Body() changeEmailDto: ChangeEmailDto,
-		@Res({ passthrough: true }) res: Response
+		@User('id') _userId: number,
+		@Body() _changeEmailDto: ChangeEmailDto,
+		@Res({ passthrough: true }) _res: Response
 	) {
 		return 'Email change is disabled now';
+		/*
 		const { accessToken, refreshToken, user } =
 			await this.authService.changeEmail(userId, changeEmailDto);
 		this.authService.addTokensToResponse(res, accessToken, refreshToken);
 
 		return user;
+		*/
 	}
 
 	@Patch('password')
@@ -153,12 +155,13 @@ export class AuthController {
 	@ApiOperation({ summary: 'Changes password' })
 	@ApiResponse({ status: 200, type: UserPrivate })
 	async changePassword(
-		@User('id') userId: number,
-		@User('password') password: string,
-		@Body() changePasswordDto: ChangePasswordDto,
-		@Res({ passthrough: true }) res: Response
+		@User('id') _userId: number,
+		@User('password') _password: string,
+		@Body() _changePasswordDto: ChangePasswordDto,
+		@Res({ passthrough: true }) _res: Response
 	) {
 		return 'Password change is disabled now';
+		/*
 		const { accessToken, refreshToken, user } =
 			await this.authService.changePassword(
 				userId,
@@ -168,5 +171,6 @@ export class AuthController {
 		this.authService.addTokensToResponse(res, accessToken, refreshToken);
 
 		return user;
+		*/
 	}
 }

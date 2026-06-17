@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { FileService } from './file.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { multerConfig } from 'src/config/multer.config';
 import { CloudinaryProvider } from './cloudinary.provider';
+import { FileService } from './file.service';
 
 @Module({
 	providers: [FileService, CloudinaryProvider],

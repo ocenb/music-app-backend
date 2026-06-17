@@ -59,12 +59,12 @@ export class LikedTrackService {
 		});
 
 		const prevIds: number[] = [];
-		prevTracks.map((obj) => {
+		prevTracks.forEach((obj) => {
 			prevIds.push(obj.track.id);
 		});
 
 		const nextIds: number[] = [];
-		nextTracks.map((obj) => {
+		nextTracks.forEach((obj) => {
 			nextIds.push(obj.track.id);
 		});
 

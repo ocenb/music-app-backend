@@ -8,15 +8,15 @@ import {
 	Post,
 	Query
 } from '@nestjs/common';
-import { ListeningHistoryService } from './listening-history.service';
-import { User } from 'src/auth/decorators/user.decorator';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
+import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import {
 	ListeningHistoryRelation,
 	ListeningHistoryTrack
 } from './listening-history.entities';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
+import { ListeningHistoryService } from './listening-history.service';
 
 @ApiTags('Listening history')
 @Auth()

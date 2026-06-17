@@ -1,20 +1,20 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { UserService } from './user.service';
-import { UserController } from './user.controller';
-import { PrismaService } from 'src/prisma.service';
-import { FollowModule } from './follow/follow.module';
-import { SavedPlaylistModule } from './saved-playlist/saved-playlist.module';
-import { LikedTrackModule } from './liked-track/liked-track.module';
-import { FileModule } from 'src/file/file.module';
 import { MulterModule } from '@nestjs/platform-express';
-import { multerConfig } from 'src/config/multer.config';
-import { ListeningHistoryModule } from './listening-history/listening-history.module';
 import { AlbumModule } from 'src/album/album.module';
-import { TrackModule } from 'src/track/track.module';
 import { AuthModule } from 'src/auth/auth.module';
-import { LikedAlbumModule } from './liked-album/liked-album.module';
+import { multerConfig } from 'src/config/multer.config';
+import { FileModule } from 'src/file/file.module';
 import { PlaylistModule } from 'src/playlist/playlist.module';
+import { PrismaService } from 'src/prisma.service';
 import { SearchModule } from 'src/search/search.module';
+import { TrackModule } from 'src/track/track.module';
+import { FollowModule } from './follow/follow.module';
+import { LikedAlbumModule } from './liked-album/liked-album.module';
+import { LikedTrackModule } from './liked-track/liked-track.module';
+import { ListeningHistoryModule } from './listening-history/listening-history.module';
+import { SavedPlaylistModule } from './saved-playlist/saved-playlist.module';
+import { UserController } from './user.controller';
+import { UserService } from './user.service';
 
 @Module({
 	controllers: [UserController],
@@ -29,8 +29,8 @@ import { SearchModule } from 'src/search/search.module';
 		LikedAlbumModule,
 		FileModule,
 		ListeningHistoryModule,
-		AlbumModule,
-		TrackModule,
+		forwardRef(() => AlbumModule),
+		forwardRef(() => TrackModule),
 		PlaylistModule,
 		forwardRef(() => SearchModule)
 	]

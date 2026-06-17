@@ -1,9 +1,9 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { PlaylistTrackService } from './playlist-track.service';
-import { PlaylistTrackController } from './playlist-track.controller';
 import { PrismaService } from 'src/prisma.service';
 import { TrackModule } from 'src/track/track.module';
 import { PlaylistModule } from '../playlist.module';
+import { PlaylistTrackController } from './playlist-track.controller';
+import { PlaylistTrackService } from './playlist-track.service';
 
 @Module({
 	controllers: [PlaylistTrackController],

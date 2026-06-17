@@ -8,12 +8,12 @@ import {
 	Post,
 	Query
 } from '@nestjs/common';
-import { LikedAlbumService } from './liked-album.service';
-import { User } from 'src/auth/decorators/user.decorator';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LikedAlbum } from './liked-album.entities';
-import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
+import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
+import { LikedAlbum } from './liked-album.entities';
+import { LikedAlbumService } from './liked-album.service';
 
 @ApiTags('Liked albums')
 @Auth()

@@ -1,11 +1,11 @@
+import * as crypto from 'node:crypto';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from 'src/prisma.service';
-import { Payload, UserData } from './models/payload.model';
-import { UserService } from 'src/user/user.service';
 import { Interval } from '@nestjs/schedule';
+import { PrismaService } from 'src/prisma.service';
+import { UserService } from 'src/user/user.service';
 import { v4 as uuidv4 } from 'uuid';
-import * as crypto from 'crypto';
+import { Payload, UserData } from './models/payload.model';
 
 @Injectable()
 export class TokenService {
@@ -49,9 +49,8 @@ export class TokenService {
 	async validateRefreshToken(refreshToken: string) {
 		const payload: Payload = this.jwtService.verify(refreshToken);
 		if (
-			!payload ||
-			!payload.tokenId ||
-			!payload.userId ||
+			!payload?.tokenId ||
+			!payload?.userId ||
 			typeof payload.tokenId !== 'string' ||
 			typeof payload.userId !== 'number'
 		) {

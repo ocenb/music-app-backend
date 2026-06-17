@@ -8,12 +8,12 @@ import {
 	Post,
 	Query
 } from '@nestjs/common';
-import { SavedPlaylistService } from './saved-playlist.service';
-import { User } from 'src/auth/decorators/user.decorator';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { SavedPlaylist } from './saved-playlist.entities';
-import { Auth } from 'src/auth/decorators/auth.decorator';
+import { SavedPlaylistService } from './saved-playlist.service';
 
 @ApiTags('Saved playlists')
 @Auth()

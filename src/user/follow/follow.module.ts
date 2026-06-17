@@ -1,8 +1,8 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { FollowService } from './follow.service';
-import { FollowController } from './follow.controller';
 import { PrismaService } from 'src/prisma.service';
 import { UserModule } from '../user.module';
+import { FollowController } from './follow.controller';
+import { FollowService } from './follow.service';
 
 @Module({
 	controllers: [FollowController],

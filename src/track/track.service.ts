@@ -1,3 +1,4 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
 	BadRequestException,
 	ForbiddenException,
@@ -6,17 +7,16 @@ import {
 	Injectable,
 	NotFoundException
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
-import { UpdateTrackDto, UploadedFilesDto, UploadTrackDto } from './track.dto';
-import { FileService } from 'src/file/file.service';
-import { PlaylistTrackService } from 'src/playlist/playlist-track/playlist-track.service';
-import { AlbumTrackService } from 'src/album/album-track/album-track.service';
-import { NotificationService } from 'src/notification/notification.service';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { SearchService } from 'src/search/search.service';
 import { Express } from 'express';
+import { AlbumTrackService } from 'src/album/album-track/album-track.service';
+import { FileService } from 'src/file/file.service';
+import { NotificationService } from 'src/notification/notification.service';
+import { PlaylistTrackService } from 'src/playlist/playlist-track/playlist-track.service';
+import { PrismaService } from 'src/prisma.service';
 import { CreateDocumentDto } from 'src/search/search.dto';
+import { SearchService } from 'src/search/search.service';
+import { UpdateTrackDto, UploadedFilesDto, UploadTrackDto } from './track.dto';
 
 @Injectable()
 export class TrackService {
@@ -25,9 +25,11 @@ export class TrackService {
 		private readonly fileService: FileService,
 		@Inject(forwardRef(() => PlaylistTrackService))
 		private readonly playlistTrackService: PlaylistTrackService,
+		@Inject(forwardRef(() => AlbumTrackService))
 		private readonly albumTrackService: AlbumTrackService,
 		private readonly notificationService: NotificationService,
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+		@Inject(forwardRef(() => SearchService))
 		private readonly searchService: SearchService
 	) {}
 
@@ -99,12 +101,12 @@ export class TrackService {
 		});
 
 		const prevIds: number[] = [];
-		prevTracks.map((obj) => {
+		prevTracks.forEach((obj) => {
 			prevIds.push(obj.id);
 		});
 
 		const nextIds: number[] = [];
-		nextTracks.map((obj) => {
+		nextTracks.forEach((obj) => {
 			nextIds.push(obj.id);
 		});
 
@@ -223,7 +225,7 @@ export class TrackService {
 		const forSearch: CreateDocumentDto[] = [];
 		const tracksIds: number[] = [];
 
-		tracksIdsObjects.map((obj) => {
+		tracksIdsObjects.forEach((obj) => {
 			forSearch.push({ id: obj.id, name: obj.title, type: 'track' });
 			tracksIds.push(obj.id);
 		});

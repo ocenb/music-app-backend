@@ -6,9 +6,9 @@ import {
 	NotFoundException
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { AddTrackDto, UpdateTrackPositionDto } from './playlist-track.dto';
 import { TrackService } from 'src/track/track.service';
 import { PlaylistService } from '../playlist.service';
+import { AddTrackDto, UpdateTrackPositionDto } from './playlist-track.dto';
 
 @Injectable()
 export class PlaylistTrackService {
@@ -66,14 +66,14 @@ export class PlaylistTrackService {
 
 		const prevIds: number[] = [];
 		if (prevTracks) {
-			prevTracks.tracks.map((obj) => {
+			prevTracks.tracks.forEach((obj) => {
 				prevIds.push(obj.track.id);
 			});
 		}
 
 		const nextIds: number[] = [];
 		if (nextTracks) {
-			nextTracks.tracks.map((obj) => {
+			nextTracks.tracks.forEach((obj) => {
 				nextIds.push(obj.track.id);
 			});
 		}

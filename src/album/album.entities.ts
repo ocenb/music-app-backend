@@ -1,5 +1,5 @@
-import { AlbumType } from './album.dto';
 import { ApiDate } from 'src/decorators/api.decorator';
+import { AlbumType } from './album.dto';
 
 export class Album {
 	id: number;

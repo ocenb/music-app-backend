@@ -1,12 +1,12 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, type NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
 	constructor(private readonly configService: ConfigService) {}
 
-	use(req: Request, res: Response, next: NextFunction) {
+	use(req: Request, _res: Response, next: NextFunction) {
 		const accessToken =
 			req.cookies[this.configService.getOrThrow<string>('ACCESS_TOKEN')];
 

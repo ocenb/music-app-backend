@@ -13,23 +13,10 @@ import {
 	UploadedFiles,
 	UseInterceptors
 } from '@nestjs/common';
-import { TrackService } from './track.service';
-import {
-	UpdateTrackDto,
-	UpdateTrackDtoWithImage,
-	UploadedFilesDto,
-	UploadTrackDto,
-	UploadTrackDtoWithFiles
-} from './track.dto';
 import {
 	FileFieldsInterceptor,
 	FileInterceptor
 } from '@nestjs/platform-express';
-import { User } from 'src/auth/decorators/user.decorator';
-import {
-	AudioImageValidationPipe,
-	ImageOptionalValidationPipe
-} from 'src/pipes/files-validation.pipe';
 import {
 	ApiBody,
 	ApiConsumes,
@@ -37,10 +24,23 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import { Track, TrackWithLiked } from './track.entities';
-import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
-import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Express } from 'express';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
+import {
+	AudioImageValidationPipe,
+	ImageOptionalValidationPipe
+} from 'src/pipes/files-validation.pipe';
+import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
+import {
+	type UpdateTrackDto,
+	UpdateTrackDtoWithImage,
+	type UploadedFilesDto,
+	type UploadTrackDto,
+	UploadTrackDtoWithFiles
+} from './track.dto';
+import { Track, TrackWithLiked } from './track.entities';
+import { TrackService } from './track.service';
 
 @ApiTags('Track')
 @Auth()

@@ -1,13 +1,13 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { PlaylistService } from './playlist.service';
-import { PlaylistController } from './playlist.controller';
-import { PrismaService } from 'src/prisma.service';
 import { MulterModule } from '@nestjs/platform-express';
-import { FileModule } from 'src/file/file.module';
-import { PlaylistTrackModule } from './playlist-track/playlist-track.module';
-import { TrackModule } from 'src/track/track.module';
 import { multerConfig } from 'src/config/multer.config';
+import { FileModule } from 'src/file/file.module';
+import { PrismaService } from 'src/prisma.service';
+import { TrackModule } from 'src/track/track.module';
 import { SavedPlaylistModule } from 'src/user/saved-playlist/saved-playlist.module';
+import { PlaylistController } from './playlist.controller';
+import { PlaylistService } from './playlist.service';
+import { PlaylistTrackModule } from './playlist-track/playlist-track.module';
 
 @Module({
 	controllers: [PlaylistController],

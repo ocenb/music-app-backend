@@ -1,3 +1,4 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
 	BadRequestException,
 	ForbiddenException,
@@ -6,16 +7,15 @@ import {
 	Injectable,
 	NotFoundException
 } from '@nestjs/common';
-import { FileService } from 'src/file/file.service';
-import { PrismaService } from 'src/prisma.service';
-import { CreateAlbumDto, UpdateAlbumDto } from './album.dto';
-import { TrackService } from 'src/track/track.service';
-import { AlbumTrackService } from './album-track/album-track.service';
-import { NotificationService } from 'src/notification/notification.service';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { SearchService } from 'src/search/search.service';
 import { Express } from 'express';
+import { FileService } from 'src/file/file.service';
+import { NotificationService } from 'src/notification/notification.service';
+import { PrismaService } from 'src/prisma.service';
+import { SearchService } from 'src/search/search.service';
+import { TrackService } from 'src/track/track.service';
+import { CreateAlbumDto, UpdateAlbumDto } from './album.dto';
+import { AlbumTrackService } from './album-track/album-track.service';
 
 @Injectable()
 export class AlbumService {
@@ -225,7 +225,9 @@ export class AlbumService {
 
 		await this.prismaService.album.deleteMany({ where: { userId } });
 
-		await this.cacheManager.store.mdel(...keys);
+		if (keys.length > 0) {
+			await Promise.all(keys.map((key) => this.cacheManager.del(key)));
+		}
 	}
 
 	async validateAlbum(albumId: number) {

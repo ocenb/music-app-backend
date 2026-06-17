@@ -1,8 +1,8 @@
 import { PartialType } from '@nestjs/swagger';
 import { IsString, Length } from 'class-validator';
+import { Express } from 'express';
 import { ApiFile } from 'src/decorators/api.decorator';
 import { ChangeableId, Title } from 'src/decorators/validation.decorator';
-import { Express } from 'express';
 
 export class UploadTrackDto {
 	@IsString()

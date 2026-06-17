@@ -1,14 +1,14 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { TrackService } from './track.service';
-import { TrackController } from './track.controller';
-import { PrismaService } from 'src/prisma.service';
 import { MulterModule } from '@nestjs/platform-express';
-import { FileModule } from 'src/file/file.module';
-import { PlaylistTrackModule } from 'src/playlist/playlist-track/playlist-track.module';
-import { multerConfig } from 'src/config/multer.config';
 import { AlbumTrackModule } from 'src/album/album-track/album-track.module';
+import { multerConfig } from 'src/config/multer.config';
+import { FileModule } from 'src/file/file.module';
 import { NotificationModule } from 'src/notification/notification.module';
+import { PlaylistTrackModule } from 'src/playlist/playlist-track/playlist-track.module';
+import { PrismaService } from 'src/prisma.service';
 import { SearchModule } from 'src/search/search.module';
+import { TrackController } from './track.controller';
+import { TrackService } from './track.service';
 
 @Module({
 	controllers: [TrackController],
@@ -17,8 +17,8 @@ import { SearchModule } from 'src/search/search.module';
 		MulterModule.register(multerConfig),
 		forwardRef(() => PlaylistTrackModule),
 		FileModule,
-		AlbumTrackModule,
-		NotificationModule,
+		forwardRef(() => AlbumTrackModule),
+		forwardRef(() => NotificationModule),
 		forwardRef(() => SearchModule)
 	],
 	exports: [TrackService]

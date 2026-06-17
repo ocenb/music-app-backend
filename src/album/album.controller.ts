@@ -13,22 +13,10 @@ import {
 	UploadedFiles,
 	UseInterceptors
 } from '@nestjs/common';
-import { AlbumService } from './album.service';
 import {
 	FileFieldsInterceptor,
 	FileInterceptor
 } from '@nestjs/platform-express';
-import { User } from 'src/auth/decorators/user.decorator';
-import {
-	CreateAlbumDto,
-	CreateAlbumDtoWithFiles,
-	UpdateAlbumDto,
-	UpdateAlbumDtoWithImage
-} from './album.dto';
-import {
-	ImageAndAudiosValidationPipe,
-	ImageOptionalValidationPipe
-} from 'src/pipes/files-validation.pipe';
 import {
 	ApiBody,
 	ApiConsumes,
@@ -36,10 +24,22 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import { Album, AlbumFull } from './album.entities';
-import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
-import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Express } from 'express';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
+import {
+	ImageAndAudiosValidationPipe,
+	ImageOptionalValidationPipe
+} from 'src/pipes/files-validation.pipe';
+import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
+import {
+	type CreateAlbumDto,
+	CreateAlbumDtoWithFiles,
+	type UpdateAlbumDto,
+	UpdateAlbumDtoWithImage
+} from './album.dto';
+import { Album, AlbumFull } from './album.entities';
+import { AlbumService } from './album.service';
 
 @ApiTags('Album')
 @Auth()

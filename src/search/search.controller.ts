@@ -1,11 +1,11 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { SearchService } from './search.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	SearchResultAlbum,
 	SearchResultTrack,
 	SearchResultUser
 } from './search.entities';
+import { SearchService } from './search.service';
 
 @Controller('search')
 export class SearchController {

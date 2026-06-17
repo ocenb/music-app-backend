@@ -12,19 +12,7 @@ import {
 	UploadedFile,
 	UseInterceptors
 } from '@nestjs/common';
-import { PlaylistService } from './playlist.service';
-import {
-	CreatePlaylistDto,
-	CreatePlaylistDtoWithImage,
-	UpdatePlaylistDto,
-	UpdatePlaylistDtoWithImage
-} from './playlist.dto';
-import { User } from 'src/auth/decorators/user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
-import {
-	ImageOptionalValidationPipe,
-	ImageValidationPipe
-} from 'src/pipes/files-validation.pipe';
 import {
 	ApiBody,
 	ApiConsumes,
@@ -32,14 +20,26 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
+import { Express } from 'express';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
+import {
+	ImageOptionalValidationPipe,
+	ImageValidationPipe
+} from 'src/pipes/files-validation.pipe';
+import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
+import {
+	type CreatePlaylistDto,
+	CreatePlaylistDtoWithImage,
+	type UpdatePlaylistDto,
+	UpdatePlaylistDtoWithImage
+} from './playlist.dto';
 import {
 	Playlist,
 	PlaylistFull,
 	PlaylistWithIsSaved
 } from './playlist.entities';
-import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { Express } from 'express';
+import { PlaylistService } from './playlist.service';
 
 @ApiTags('Playlist')
 @Auth()

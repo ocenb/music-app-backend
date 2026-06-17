@@ -5,10 +5,10 @@ import {
 	Injectable,
 	NotFoundException
 } from '@nestjs/common';
-import { UpdateTrackPositionDto } from './album-track.dto';
 import { PrismaService } from 'src/prisma.service';
-import { AlbumService } from '../album.service';
 import { TrackService } from 'src/track/track.service';
+import { AlbumService } from '../album.service';
+import { UpdateTrackPositionDto } from './album-track.dto';
 
 @Injectable()
 export class AlbumTrackService {
@@ -66,12 +66,12 @@ export class AlbumTrackService {
 		});
 
 		const prevIds: number[] = [];
-		prevTracks.tracks.map((obj) => {
+		prevTracks.tracks.forEach((obj) => {
 			prevIds.push(obj.track.id);
 		});
 
 		const nextIds: number[] = [];
-		nextTracks.tracks.map((obj) => {
+		nextTracks.tracks.forEach((obj) => {
 			nextIds.push(obj.track.id);
 		});
 

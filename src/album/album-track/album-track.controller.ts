@@ -8,13 +8,13 @@ import {
 	Patch,
 	Query
 } from '@nestjs/common';
-import { AlbumTrackService } from './album-track.service';
-import { User } from 'src/auth/decorators/user.decorator';
-import { UpdateTrackPositionDto } from './album-track.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { TrackInAlbum } from './album-track.entities';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
+import { UpdateTrackPositionDto } from './album-track.dto';
+import { TrackInAlbum } from './album-track.entities';
+import { AlbumTrackService } from './album-track.service';
 
 @ApiTags('Album tracks')
 @Auth()

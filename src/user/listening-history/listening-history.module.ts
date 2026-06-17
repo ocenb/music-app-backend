@@ -1,12 +1,12 @@
-import { Module } from '@nestjs/common';
-import { ListeningHistoryService } from './listening-history.service';
-import { ListeningHistoryController } from './listening-history.controller';
+import { forwardRef, Module } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { TrackModule } from 'src/track/track.module';
+import { ListeningHistoryController } from './listening-history.controller';
+import { ListeningHistoryService } from './listening-history.service';
 
 @Module({
 	controllers: [ListeningHistoryController],
 	providers: [ListeningHistoryService, PrismaService],
-	imports: [TrackModule]
+	imports: [forwardRef(() => TrackModule)]
 })
 export class ListeningHistoryModule {}

@@ -1,9 +1,9 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { CreateDocumentDto, UpdateDocumentDto } from './search.dto';
 import { AlbumService } from 'src/album/album.service';
 import { TrackService } from 'src/track/track.service';
 import { UserService } from 'src/user/user.service';
+import { CreateDocumentDto, UpdateDocumentDto } from './search.dto';
 
 @Injectable()
 export class SearchService {
@@ -20,15 +20,14 @@ export class SearchService {
 	async search(searchQuery: string) {
 		const result = await this.elasticsearchService.search({
 			index: 'main',
-			body: {
-				query: {
-					match: { name: searchQuery }
-				}
+			query: {
+				match: { name: searchQuery }
 			}
 		});
 
 		const documents = await Promise.all(
-			result.body.hits.hits.map(async (hit: any) => {
+			// biome-ignore lint/suspicious/noExplicitAny: Elasticsearch hit can have any structure
+			result.hits.hits.map(async (hit: any) => {
 				if (hit._source.type === 'user') {
 					const document = await this.userService.getByIdPublic(hit._source.id);
 					return {
@@ -60,19 +59,19 @@ export class SearchService {
 		await this.elasticsearchService.create({
 			index: 'main',
 			id,
-			body: createDto
+			document: createDto
 		});
 	}
 
 	async createMany(createManyDto: CreateDocumentDto[]) {
-		const bulkBody = createManyDto.flatMap((createDto) => [
+		const operations = createManyDto.flatMap((createDto) => [
 			{ index: { _index: 'main', _id: `${createDto.type}_${createDto.id}` } },
 			createDto
 		]);
 
 		await this.elasticsearchService.bulk({
 			refresh: true,
-			body: bulkBody
+			operations
 		});
 	}
 
@@ -80,9 +79,7 @@ export class SearchService {
 		await this.elasticsearchService.update({
 			index: 'main',
 			id,
-			body: {
-				doc: updateDto
-			}
+			doc: updateDto
 		});
 	}
 

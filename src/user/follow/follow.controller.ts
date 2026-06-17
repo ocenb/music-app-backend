@@ -8,12 +8,12 @@ import {
 	Post,
 	Query
 } from '@nestjs/common';
-import { FollowService } from './follow.service';
-import { User } from 'src/auth/decorators/user.decorator';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
 import { Follower, Following } from './follow.entities';
-import { Auth } from 'src/auth/decorators/auth.decorator';
+import { FollowService } from './follow.service';
 
 @ApiTags('Follows')
 @Auth()

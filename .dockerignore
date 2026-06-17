@@ -7,5 +7,4 @@ dist
 .dockerignore
 Dockerfile
 README.md
-.eslintrc.js
-.prettierrc
+biome.json

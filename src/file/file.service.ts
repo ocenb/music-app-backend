@@ -1,19 +1,22 @@
+import { promises as fs } from 'node:fs';
+import { extname, join } from 'node:path';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { extname, join } from 'path';
-import { promises as fs } from 'fs';
-import * as ffmpeg from 'fluent-ffmpeg';
-import { v4 as uuidv4 } from 'uuid';
-import { v2 as cloudinary, UploadApiErrorResponse } from 'cloudinary';
-import * as sharp from 'sharp';
 import { ConfigService } from '@nestjs/config';
-import { UploadApiResponse } from 'cloudinary';
+import {
+	v2 as cloudinary,
+	type UploadApiErrorResponse,
+	type UploadApiResponse
+} from 'cloudinary';
 import { Express } from 'express';
+import ffmpeg from 'fluent-ffmpeg';
+import sharp from 'sharp';
+import { v4 as uuidv4 } from 'uuid';
 
 type FileCategory = 'audio' | 'images';
 
 @Injectable()
 export class FileService {
-	constructor(private readonly configService: ConfigService) {
+	constructor(configService: ConfigService) {
 		ffmpeg.setFfprobePath(configService.getOrThrow<string>('FFPROBE_PATH'));
 	}
 

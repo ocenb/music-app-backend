@@ -2,9 +2,9 @@ import { BadRequestException } from '@nestjs/common';
 import {
 	isArray,
 	registerDecorator,
-	ValidationOptions,
+	type ValidationOptions,
 	ValidatorConstraint,
-	ValidatorConstraintInterface
+	type ValidatorConstraintInterface
 } from 'class-validator';
 import { UploadTrackDto } from 'src/track/track.dto';
 
@@ -24,7 +24,7 @@ const messages = {
 };
 
 export function Title(validationOptions?: ValidationOptions) {
-	return function (object: object, propertyName: string) {
+	return (object: object, propertyName: string) => {
 		registerDecorator({
 			name: 'Title',
 			target: object.constructor,
@@ -43,7 +43,7 @@ export function Title(validationOptions?: ValidationOptions) {
 }
 
 export function ChangeableId(validationOptions?: ValidationOptions) {
-	return function (object: object, propertyName: string) {
+	return (object: object, propertyName: string) => {
 		registerDecorator({
 			name: 'ChangeableId',
 			target: object.constructor,
@@ -62,7 +62,7 @@ export function ChangeableId(validationOptions?: ValidationOptions) {
 }
 
 export function Password(validationOptions?: ValidationOptions) {
-	return function (object: object, propertyName: string) {
+	return (object: object, propertyName: string) => {
 		registerDecorator({
 			name: 'Password',
 			target: object.constructor,
@@ -81,7 +81,7 @@ export function Password(validationOptions?: ValidationOptions) {
 }
 
 export function Username(validationOptions?: ValidationOptions) {
-	return function (object: object, propertyName: string) {
+	return (object: object, propertyName: string) => {
 		registerDecorator({
 			name: 'Username',
 			target: object.constructor,

@@ -10,17 +10,17 @@ import {
 	Post,
 	Query
 } from '@nestjs/common';
-import { PlaylistTrackService } from './playlist-track.service';
-import { User } from 'src/auth/decorators/user.decorator';
-import { AddTrackDto, UpdateTrackPositionDto } from './playlist-track.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
+import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
+import { TracksIds } from 'src/track/track.entities';
+import { AddTrackDto, UpdateTrackPositionDto } from './playlist-track.dto';
 import {
 	PlaylistTrackRelation,
 	TrackInPlaylist
 } from './playlist-track.entities';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
-import { TracksIds } from 'src/track/track.entities';
+import { PlaylistTrackService } from './playlist-track.service';
 
 @ApiTags('Playlist tracks')
 @Auth()

@@ -7,12 +7,12 @@ import {
 	ParseIntPipe,
 	Query
 } from '@nestjs/common';
-import { NotificationService } from './notification.service';
-import { User } from 'src/auth/decorators/user.decorator';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Notification } from './notification.entities';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
 import { ParseIntOptionalPipe } from 'src/pipes/parse-int-optional.pipe';
+import { Notification } from './notification.entities';
+import { NotificationService } from './notification.service';
 
 @ApiTags('Notification')
 @Auth()

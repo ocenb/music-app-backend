@@ -4,18 +4,18 @@ import {
 	NotFoundException,
 	UnauthorizedException
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { compare, hash } from 'bcrypt';
+import { Response } from 'express';
+import { MailService } from 'src/mail/mail.service';
+import { UserService } from 'src/user/user.service';
 import {
 	ChangeEmailDto,
 	ChangePasswordDto,
 	LoginDto,
 	RegisterDto
 } from './auth.dto';
-import { hash, compare } from 'bcrypt';
-import { UserService } from 'src/user/user.service';
 import { TokenService } from './token/token.service';
-import { Response } from 'express';
-import { ConfigService } from '@nestjs/config';
-import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {

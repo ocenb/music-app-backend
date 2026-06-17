@@ -1,20 +1,24 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import KeyvRedis from '@keyv/redis';
+import { CacheModule } from '@nestjs/cache-manager';
+import {
+	type MiddlewareConsumer,
+	Module,
+	type NestModule
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UserModule } from './user/user.module';
-import { TrackModule } from './track/track.module';
-import { PlaylistModule } from './playlist/playlist.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AlbumModule } from './album/album.module';
+import { AuthMiddleware } from './auth/auth.middleware';
 import { AuthModule } from './auth/auth.module';
 import { FileModule } from './file/file.module';
-import { ScheduleModule } from '@nestjs/schedule';
-import { AuthMiddleware } from './auth/auth.middleware';
-import { AlbumModule } from './album/album.module';
-import { NotificationModule } from './notification/notification.module';
-import { CacheModule } from '@nestjs/cache-manager';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
 import { MailModule } from './mail/mail.module';
+import { NotificationModule } from './notification/notification.module';
+import { PlaylistModule } from './playlist/playlist.module';
 import { SearchModule } from './search/search.module';
-import KeyvRedis from '@keyv/redis';
+import { TrackModule } from './track/track.module';
+import { UserModule } from './user/user.module';
 
 @Module({
 	imports: [

@@ -1,8 +1,12 @@
-import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
+import { extname } from 'node:path';
+import {
+	BadRequestException,
+	Injectable,
+	type PipeTransform
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { extname } from 'path';
-import { UploadedFilesDto } from 'src/track/track.dto';
 import { Express } from 'express';
+import { UploadedFilesDto } from 'src/track/track.dto';
 
 const audioFormats = ['.mp3', '.aac', '.flac', '.wav', '.aiff', '.webm'];
 const imageFormats = ['.jpg', '.png'];
@@ -33,12 +37,12 @@ export class ImageAndAudiosValidationPipe implements PipeTransform {
 			files.image[0],
 			parseInt(this.configService.getOrThrow<string>('IMAGE_FILE_LIMIT'), 10)
 		);
-		files.audios.forEach((audio) =>
+		files.audios.forEach((audio) => {
 			validateAudio(
 				audio,
 				parseInt(this.configService.getOrThrow<string>('AUDIO_FILE_LIMIT'), 10)
-			)
-		);
+			);
+		});
 
 		return files;
 	}

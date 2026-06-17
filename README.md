@@ -1,9 +1,7 @@
 ## Music app
 
-- [Сайт](https://musicapp.fun) (Для входа нажмите **"Login as guest"**)
-- [Документация API](https://musicapp.fun/api/docs)
-- [Backend код](https://gitlab.com/unveo/music-app-backend)
-- [Frontend код](https://gitlab.com/unveo/music-app-frontend)
+- [Backend код](https://github.com/ocenb/music-app-backend)
+- [Frontend код](https://github.com/ocenb/music-app-frontend)
 
 ## Основные возможности
 
@@ -27,18 +25,18 @@
 
 ## Архитектура и особенности
 
-### Backend:
+### Backend
 
-- Авторизация с JWT токенами (access и refresh). ([auth module](https://gitlab.com/unveo/music-app-backend/-/tree/main/src/auth))
+- Авторизация с JWT токенами (access и refresh). ([auth module](https://github.com/ocenb/music-app-backend/tree/main/src/auth))
 - Валидация, документация и т.д.
 - Кэширование с Redis.
 - Поиск через Elasticsearch (Bonsai.io).
-- Нормализация громкости и конвертация аудиофайлов в `.webm` с помощью Ffmpeg. ([file module](https://gitlab.com/unveo/music-app-backend/-/blob/main/src/file/file.service.ts))
+- Нормализация громкости и конвертация аудиофайлов в `.webm` с помощью Ffmpeg. ([file module](https://github.com/ocenb/music-app-backend/blob/main/src/file/file.service.ts))
 - Загрузка аудио и изображений в облако Cloudinary.
 - Деплой на VPS с использованием Docker.
 
-### Frontend:
+### Frontend
 
-- Сложная логика проигрывания треков, полный функционал плеера. ([play-track.tsx](https://gitlab.com/unveo/music-app-frontend/-/blob/main/hooks/play-track.tsx), [player.tsx](https://gitlab.com/unveo/music-app-frontend/-/blob/main/hooks/player.tsx))
+- Сложная логика проигрывания треков, полный функционал плеера. ([play-track.tsx](https://github.com/ocenb/music-app-frontend/blob/main/hooks/play-track.tsx), [player.tsx](https://github.com/ocenb/music-app-frontend/blob/main/hooks/player.tsx))
 - Валидация данных.
 - Деплой через Vercel.

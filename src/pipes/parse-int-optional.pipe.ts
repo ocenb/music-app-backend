@@ -1,8 +1,8 @@
 import {
-	PipeTransform,
+	type ArgumentMetadata,
 	Injectable,
-	ArgumentMetadata,
-	ParseIntPipe
+	ParseIntPipe,
+	type PipeTransform
 } from '@nestjs/common';
 
 @Injectable()

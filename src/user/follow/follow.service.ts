@@ -67,7 +67,7 @@ export class FollowService {
 	async check(userId: number, userToCheckId: number) {
 		const follow = await this.getFollow(userId, userToCheckId);
 
-		return follow ? true : false;
+		return !!follow;
 	}
 
 	async follow(userId: number, userToFollowId: number) {

@@ -1,11 +1,11 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { SearchService } from './search.service';
-import { SearchController } from './search.controller';
-import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { AlbumModule } from 'src/album/album.module';
-import { UserModule } from 'src/user/user.module';
 import { TrackModule } from 'src/track/track.module';
+import { UserModule } from 'src/user/user.module';
+import { SearchController } from './search.controller';
+import { SearchService } from './search.service';
 
 @Module({
 	controllers: [SearchController],
